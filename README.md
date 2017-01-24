@@ -128,10 +128,11 @@ A. For each method, a directory will be generated with the short name of the met
 B. Besides the directories for each method, there will be a directory titled "reconstructions".  This has .ply files for the calibration pattern reconstructed using the calibration information from each method, including the ground truth (ideal.ply), and is sometimes useful for visualization purposes.  These model files can be viewed in a viewer such as MeshLab.
 
 C. comparisons.txt, shows the results according to the metrics we discuss in our paper, excepting the reconstruction accuracy metric.
+
 D. reconstruction_accuracy_error_comparisons.txt, shows the individual results for the reconstruction accuracy metric.
 
 
-switch (option) {
+		switch (option) {
 		case 0:{
 			descriptor_string = "Euler param. c1 simultaneous ";
 			abbreviated_descriptor_string = "E_c1_simul";
