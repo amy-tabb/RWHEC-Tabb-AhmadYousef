@@ -44,7 +44,8 @@ Instructions for the input format can be found in: README_input_format.txt.
 Run time:
 It will take some time (on the order of 4 minutes) to perform camera calibration, and then to perform all of the robot-world, hand-eye calibration methods (4 minutes more), though this varies by dataset and image size. 
 
-INPUT FORMAT -- DATASETS TO BE POSTED SOON
+INPUT FORMAT -- DATASETS ARE POSTED AT THE National Agriculture Library's Ag Data Commons, DOI is 10.15482/USDA.ADC/1340592
+Access the datasets via link here: http://dx.doi.org/10.15482/USDA.ADC
 Required Directories:
 images
 internal_images
