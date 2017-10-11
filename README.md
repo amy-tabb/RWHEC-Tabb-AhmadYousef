@@ -3,11 +3,28 @@
 BUILDING AND RUNNING
 
 This README file is to accompany code for robot-world, hand-eye calibration, produced by Amy Tabb and Khalil M. Ahmad Yousef as a companion to their paper:
-	Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods which is currently under review.
+	Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods
+
+@Article{Tabb2017,
+author="Tabb, Amy
+and Ahmad Yousef, Khalil M.",
+title="Solving the robot-world hand-eye(s) calibration problem with iterative methods",
+journal="Machine Vision and Applications",
+year="2017",
+month="Aug",
+day="01",
+volume="28",
+number="5",
+pages="569--590",
+issn="1432-1769",
+doi="10.1007/s00138-017-0841-7",
+url="https://doi.org/10.1007/s00138-017-0841-7"
+}
+
 
 If you use this code in project that results in a publication, please cite the paper above.  Otherwise, there are no restrictions in your use of this code.  However, no guarantees are expressed or implied.
 
-Jan 24, 2017
+Oct 11, 2017
 Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 This README covers instructions for building the code.
