@@ -3,14 +3,14 @@
 Methods for robot-world, hand-eye calibration; version 2.0.
 
 June 1, 2018: This code is up an updated version using the following versions of external libraries:
-OpenCV 4.0
+OpenCV 4.0 (OpenCV 3.0 may work with changes of some enums - read below)
 Ceres 1.11
 Eigen 3.2.0
 
 A deprecated version using earlier versions of OpenCV (and newmat for matrix handling instead of Eigen) is available https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef2017. 
 
 
-A bug with regards to the computation of the translation error has been corrected. In additon, the code has been cleaned up.  The use of this version is highly recommended over the prior version (though the bug is fixed in the prior version as well).
+A bug with regards to the computation of the translation error has been corrected. In additon, the code has been cleaned up in this version versus the previous one.  If you wish to understand the code, this is the version to use.  The performance of both versions is identical so far as I can tell on my machines.
 
 ---------------------------------------------------------------------
 BUILDING AND RUNNING
@@ -42,17 +42,17 @@ Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 This README covers instructions for building the code.
 
-This code uses the Ceres, OpenCV (3.0, though instructions for 2.4 are given as well), and newmat libraries.  Ceres uses cmake, so as a result, this is a cmake project.  You will need to have cmake installed in order to build the project.
-Ceres link: http://ceres-solver.org/
-	We are not responsible for whatever it takes to get Ceres to build; but advise that having a recent version of Eigen and Google's glog are helpful to the process. 
-OpenCV link: http://opencv.org/
-	To use OpenCV > 3.0, no alteration is needed.
-	To use OpenCV 2.4.9, go to the CMakeLists.txt file in the code_src folder, this line:
-		target_link_libraries(RWHEC_release_Jul2016_Project ${CERES_LIBRARIES} newmat opencv_core opencv_highgui opencv_imgproc opencv_calib3d opencv_imgcodecs)
-	Remove "opencv_imgcodecs" and the code should link.
-Newmat link: http://www.robertnz.net/nm_intro.htm  We use the newmat11 beta version. Instructions for building are here: http://www.robertnz.net/nm11.htm#starting . 
+This code uses the Ceres, OpenCV 4.0, and Eigen libraries.  Ceres uses cmake, so as a result, this is a cmake project.  You will need to have cmake installed in order to build the project.
 
-This code has been tested on Ubuntu 12.04 and 14.04.  You are welcome to convert it to Windows, but we have not.  Also, note than while OpenCV and newmat are avaliable through the repositories, we download and build these libraries from the latest versions.
+Ceres link: http://ceres-solver.org/
+
+We are not responsible for whatever it takes to get Ceres to build; but advise that having a recent version of Eigen and Google's glog are helpful to the process. 
+
+OpenCV link: http://opencv.org/ As of this writing, the version installed from github (https://github.com/opencv/opencv) is returning OpenCV 4.0 as the version.
+
+To convert code written under OpenCV 3.0 to OpenCV 4.0, the biggest change revolved around calibration flag enums such as CV_CALIB_CB_ADAPTIVE_THRESH.  To get this code to compile under OpenCV 4.0, all I did was change such a flag to cv::CALIB_CB_ADAPTIVE_THRESH.  To go back to OpenCV 3.0, you would do the opposite.
+
+This code has been tested on Ubuntu 14.04.  You are welcome to convert it to Windows, but we have not.  While OpenCV is available from the repositories, my long experience with it is always to build from the source to get the best results.
 
 Building:
 These instructions assume that you use cmake to generate a project file for the Eclipse Integrated Development Environment (IDE).  There are other methods for using cmake to generate an executable.  You are welcome to use them.  These instructions are provided to give the basics assuming you have an Eclipse installation.
