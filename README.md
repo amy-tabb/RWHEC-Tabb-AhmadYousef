@@ -1,5 +1,7 @@
 # RWHEC-Tabb-AhmadYousef
 
+Comments/Bugs/Problems: amy.tabb@ars.usda.gov
+
 Methods for robot-world, hand-eye calibration; version 2.0.
 
 June 1, 2018: This code is up an updated version using the following versions of external libraries:
@@ -52,7 +54,7 @@ howpublished= {\url{http://dx.doi.org/10.15482/USDA.ADC/1340592}}
 
 If you use this code in project that results in a publication, please cite at a minimum the paper above.  Otherwise, there are no restrictions in your use of this code.  However, no guarantees are expressed or implied.
 
-Comments/Bugs/Problems: amy.tabb@ars.usda.gov
+
 
 This README covers instructions for building the code.
 
