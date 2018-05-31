@@ -3,8 +3,11 @@
 Methods for robot-world, hand-eye calibration; version 2.0.
 
 June 1, 2018: This code is up an updated version using the following versions of external libraries:
+
 OpenCV 4.0 (OpenCV 3.0 may work with changes of some enums - read below)
+
 Ceres 1.11
+
 Eigen 3.2.0
 
 A deprecated version using earlier versions of OpenCV (and newmat for matrix handling instead of Eigen) is available https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef2017. 
@@ -18,7 +21,7 @@ BUILDING AND RUNNING
 This README file is to accompany code for robot-world, hand-eye calibration, produced by Amy Tabb as companion to a paper:
 	Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods
 
-@Article{Tabb2017,
+@Article{tabb_solving_2017,
 author="Tabb, Amy
 and Ahmad Yousef, Khalil M.",
 title="Solving the robot-world hand-eye(s) calibration problem with iterative methods",
@@ -34,10 +37,21 @@ doi="10.1007/s00138-017-0841-7",
 url="https://doi.org/10.1007/s00138-017-0841-7"
 }
 
+Dataset and/or code:
 
-If you use this code in project that results in a publication, please cite the paper above.  Otherwise, there are no restrictions in your use of this code.  However, no guarantees are expressed or implied.
+@electronic{tabb2017code_solving,
+author = {Tabb, Amy},
+year = {2017},
+title = {Data from: Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods. Ag Data Commons,
+doi = {10.15482/USDA.ADC/1340592},
+publisher = {Ag Data Commons},
+howpublished= {\url{http://dx.doi.org/10.15482/USDA.ADC/1340592}}
+} 
 
-Oct 11, 2017
+
+
+If you use this code in project that results in a publication, please cite at a minimum the paper above.  Otherwise, there are no restrictions in your use of this code.  However, no guarantees are expressed or implied.
+
 Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 This README covers instructions for building the code.
