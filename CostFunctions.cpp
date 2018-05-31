@@ -3,11 +3,12 @@
  *
  *  Created on: Nov 18, 2015
  *      Author: atabb
+ *       Updated on May25, 2018 to use Eigen instead of newmat by atabb
  */
 #include "CostFunctions.hpp"
 
 
-void CF1_2_one_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
+void CF1_2_one_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
 
 	Problem problem;
 
@@ -15,14 +16,14 @@ void CF1_2_one_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* 
 	double* A = new double[16*number_images];
 	double* B = new double[16*number_images];
 
-	// change all of this newmat stuff out ...
+
 	for (int i = 0; i < int(As[0].size()); i++) {
-		//	for (int i = 0; i < 1; i++) {
+
 
 		for (int r = 0, in = 0; r < 4; r++){
 			for (int c = 0; c < 4; c++, in++){
-				A[in + 16*i] = As[0][i](r + 1, c + 1);
-				B[in + 16*i] = Bs[i](r + 1, c + 1);
+				A[in + 16*i] = As[0][i](r, c);
+				B[in + 16*i] = Bs[i](r , c);
 			}
 		}
 
@@ -66,7 +67,7 @@ void CF1_2_one_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* 
 
 
 
-void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
+void CF1_2_multi_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
 
 	// make flexible for different numbers of images for different cameras ....
 	Problem problem;
@@ -76,7 +77,7 @@ void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double
 	int number_images = As[0].size();
 
 	vector<double*> AA;
-	//double* A = new double[16*number_images];
+
 	for (int i = 0; i < number_cameras; i++){
 		AA.push_back(new double[16*number_images]);
 	}
@@ -94,7 +95,7 @@ void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double
 		int count = 0;
 
 		for (int i = 0; i < number_images; i++){
-			if (As[j][i].nrows() > 0){
+			if (As[j][i].rows() > 0){
 				count++;
 			}
 		}
@@ -129,35 +130,25 @@ void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double
 		out << endl;
 	}
 
-	char ch;
-	//cin >> ch;
 
-	//	out << "Z ";
-	//	for (int i = 0; i < 7; i++){
-	//		out << x[7*(number_cameras + 1) + i] << " ";
-	//	}
+
 	out << endl;
 
 	for (int j = 0; j < number_cameras; j++){
-
-		// change all of this newmat stuff out ...
 		for (int i = 0; i < number_images; i++) {
-			//	for (int i = 0; i < 1; i++) {
-
 
 			if (As[j][i].size() > 0){
 				// for each image, B stays the same
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						B[in + 16*i] = Bs[i](r + 1, c + 1);
+						B[in + 16*i] = Bs[i](r, c);
 					}
 				}
 
 
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						AA[j][16*i + in] = As[j][i](r + 1, c + 1);
-						//cout << 16*i + in << " ";
+						AA[j][16*i + in] = As[j][i](r, c);
 					}
 				}
 
@@ -192,10 +183,9 @@ void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double
 	};
 
 	cout << "After solving " << endl;
-	//cin >> ch;
 
 	parameter_blocks.clear();
-	//delete [] A;
+
 	for (int i = 0; i < number_cameras; i++){
 		delete [] AA[i];
 	}
@@ -203,7 +193,7 @@ void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double
 }
 
 
-void CF1_2_multi_camera_separable(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type){
+void CF1_2_multi_camera_separable(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type){
 
 	// make flexible for different numbers of images for different cameras ....
 	Problem problem;
@@ -231,7 +221,7 @@ void CF1_2_multi_camera_separable(vector< vector<Matrix> >& As, vector<Matrix>& 
 		int count = 0;
 
 		for (int i = 0; i < number_images; i++){
-			if (As[j][i].nrows() > 0){
+			if (As[j][i].rows() > 0){
 				count++;
 			}
 		}
@@ -267,35 +257,29 @@ void CF1_2_multi_camera_separable(vector< vector<Matrix> >& As, vector<Matrix>& 
 		out << endl;
 	}
 
-	char ch;
-	//cin >> ch;
 
-	//	out << "Z ";
-	//	for (int i = 0; i < 7; i++){
-	//		out << x[7*(number_cameras + 1) + i] << " ";
-	//	}
+
 	out << endl;
 
 	for (int j = 0; j < number_cameras; j++){
 
-		// change all of this newmat stuff out ...
+
 		for (int i = 0; i < number_images; i++) {
-			//	for (int i = 0; i < 1; i++) {
 
 
-			if (As[j][i].nrows() > 0){
+			if (As[j][i].rows() > 0){
 				// for each image, B stays the same
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						B[in + 16*i] = Bs[i](r + 1, c + 1);
+						B[in + 16*i] = Bs[i](r, c);
 					}
 				}
 
 
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						AA[j][16*i + in] = As[j][i](r + 1, c + 1);
-						//cout << 16*i + in << " ";
+						AA[j][16*i + in] = As[j][i](r, c);
+
 					}
 				}
 
@@ -330,10 +314,9 @@ void CF1_2_multi_camera_separable(vector< vector<Matrix> >& As, vector<Matrix>& 
 	};
 
 	cout << "After solving " << endl;
-	//cin >> ch;
 
 	parameter_blocks.clear();
-	//delete [] A;
+
 	for (int i = 0; i < number_cameras; i++){
 		delete [] AA[i];
 	}
@@ -370,7 +353,7 @@ void CopyToCalibration(vector<CaliObjectOpenCV2>& COs, double* camera_parameters
 		}
 	}
 }
-void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
 
 	// make flexible for different numbers of images for different cameras ....
@@ -485,13 +468,13 @@ void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, doub
 				// for each image, B stays the same
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						B[in + 16*i] = Bs[i](r + 1, c + 1);
+						B[in + 16*i] = Bs[i](r, c);
 					}
 				}
 
 
 				for (int k = 0; k < number_points; k++){
-					//for (int k = 0; k < 10; k++){
+
 					twoDpoints[j][i][k*2] = COs[j].all_points[COs[j].number_internal_images_written + i][k].x;
 					twoDpoints[j][i][k*2 + 1] = COs[j].all_points[COs[j].number_internal_images_written + i][k].y;
 
@@ -499,7 +482,7 @@ void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, doub
 					threeDpoints[j][i][k*3 + 1] = COs[j].all_3d_corners[COs[j].number_internal_images_written + non_blanks][k].y;
 					threeDpoints[j][i][k*3 + 2] = COs[j].all_3d_corners[COs[j].number_internal_images_written + non_blanks][k].z;
 
-					//cout << "Before create " << endl; //char fg; cin >> fg;
+
 
 					ceres::CostFunction* cost_function =
 							RP1_2_multi::Create(
@@ -531,7 +514,6 @@ void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, doub
 	std::cout << summary.BriefReport() << "\n";
 
 	cout << "After running solver " << endl;
-	//char ch; cin >> ch;
 
 	out << "X  ... Z" << endl;
 	for (int j = 0; j < number_cameras + 1; j++){
@@ -554,7 +536,7 @@ void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, doub
 
 
 	parameter_blocks.clear();
-	//delete [] A;
+
 	for (int i = 0; i < number_cameras; i++){
 		for (int j = 0; j < number_images; j++){
 			delete [] twoDpoints[i][j];
@@ -566,7 +548,7 @@ void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, doub
 
 
 
-void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
 
 	// make flexible for different numbers of images for different cameras ....
@@ -645,24 +627,12 @@ void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& B
 		for (int j = 0; j < 7; j++){
 			parameter_blocks.push_back(&x[(i + 1)*7 + j]);
 		}
-		//		// first row
-		//		camera_params[12*i] = COs[i].A[0][0];
-		//		camera_params[12*i + 1] = COs[i].A[0][2];
-		//		camera_params[12*i + 2] = COs[i].A[1][1];
-		//		camera_params[12*i + 3] = COs[i].A[1][2];
-		//
-		//		for (int j = 0; j < 8; j++){
-		//			camera_params[12*i + 4 + j] = COs[i].k[j];
-		//		}
 
 		for (int j = 0; j < 12; j++){
 			parameter_blocks.push_back(&camera_params[12*i + j]);
 		}
 	}
 
-	//	for (int j = 0; j < 7; j++){
-	//		parameter_blocks.push_back(&x[number_cameras*7 + j]);
-	//	}
 
 	//19 vs 26
 
@@ -689,13 +659,12 @@ void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& B
 	for (int j = 0; j < number_cameras; j++){
 		int non_blanks = 0;
 		for (int i = 0; i < number_images; i++) {
-			//for (int i = 0; i < 1; i++) {
 
 			if (COs[j].all_points[COs[j].number_internal_images_written + i].size() > 0){
 				// for each image, B stays the same
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						B[in + 16*i] = Bs[i](r + 1, c + 1);
+						B[in + 16*i] = Bs[i](r, c);
 					}
 				}
 
@@ -703,7 +672,7 @@ void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& B
 				for (int k = 0; k < number_points; k++){
 					// top, left, bottom, right
 					if (k % (COs[j].chess_w/2 - 1) == 0 ){
-						//for (int k = 0; k < 10; k++){
+
 						twoDpoints[j][i][k*2] = COs[j].all_points[COs[j].number_internal_images_written + i][k].x;
 						twoDpoints[j][i][k*2 + 1] = COs[j].all_points[COs[j].number_internal_images_written + i][k].y;
 
@@ -711,7 +680,7 @@ void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& B
 						threeDpoints[j][i][k*3 + 1] = COs[j].all_3d_corners[COs[j].number_internal_images_written + non_blanks][k].y;
 						threeDpoints[j][i][k*3 + 2] = COs[j].all_3d_corners[COs[j].number_internal_images_written + non_blanks][k].z;
 
-						//cout << "Before create " << endl; //char fg; cin >> fg;
+
 
 						ceres::CostFunction* cost_function =
 								RP1_2_multi::Create(
@@ -730,7 +699,7 @@ void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& B
 	}
 
 
-	//cout << "After create blocks " << endl; char fg; cin >> fg;
+
 
 
 	// Run the solver!
@@ -777,7 +746,7 @@ void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& B
 	delete [] B;
 }
 
-void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type){
 
 	// make flexible for different numbers of images for different cameras ....
@@ -844,7 +813,7 @@ void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<
 	CopyFromCalibration(COs, camera_params);
 
 
-	// need to redo this so that x (7) is first, followed by Zs
+
 
 	// camera calibration information is already kept seperately.
 	double* param_copy = new double[7*(number_cameras + 1)];
@@ -900,7 +869,7 @@ void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<
 				// for each image, B stays the same
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						B[in + 16*i] = Bs[i](r + 1, c + 1);
+						B[in + 16*i] = Bs[i](r, c);
 					}
 				}
 
@@ -916,7 +885,6 @@ void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<
 						threeDpoints[j][i][k*3 + 1] = COs[j].all_3d_corners[COs[j].number_internal_images_written + non_blanks][k].y;
 						threeDpoints[j][i][k*3 + 2] = COs[j].all_3d_corners[COs[j].number_internal_images_written + non_blanks][k].z;
 
-						//cout << "Before create " << endl; //char fg; cin >> fg;
 
 						ceres::CostFunction* cost_function =
 								RP1_2_multi_extended::Create(
@@ -989,10 +957,10 @@ void Initialize3DPoints(vector<CaliObjectOpenCV2>& COs, double* threeDpoints, in
 }
 
 
-void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Matrix& X, vector<Matrix>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
+void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, Matrix4d& X, vector<Matrix4d>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
 		std::ofstream& out){
 
-	char ch;
+
 	// make flexible for different numbers of images for different cameras ....
 	Problem problem;
 
@@ -1007,9 +975,6 @@ void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Ma
 	vector<vector<double*> > twoDpoints;
 	vector<vector<double*> > transformations;
 	vector<double*> parameters;
-
-	//	cout << "Line 1848" << endl;
-	//	cin >> ch;
 
 	for (int i = 0; i < number_cameras; i++){
 		twoDpoints.push_back(vector<double*>());
@@ -1028,7 +993,7 @@ void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Ma
 		parameters.push_back(&threeDpoints[k]);
 	}
 
-	int minimum_number = number_images;
+	//int minimum_number = number_images;
 
 	vector<int> number_of_images_per_camera;
 
@@ -1038,7 +1003,7 @@ void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Ma
 
 	// Get camera cali parameters .....
 	CopyFromCalibration(COs, camera_params);
-	Matrix A_hat(4, 4);
+	Matrix4d A_hat;
 
 	cout << "Halfway there .... " << endl;
 	//cin >> ch;
@@ -1050,12 +1015,12 @@ void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Ma
 
 			if (COs[j].all_points[COs[j].number_internal_images_written + i].size() > 0){
 				// compute A for this image ....
-				A_hat = Zs[j]*Bs[i]*X.i();
+				A_hat = Zs[j]*Bs[i]*X.inverse();
 
 
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						transformations[j][i][in] = A_hat(r + 1, c + 1);
+						transformations[j][i][in] = A_hat(r, c);
 					}
 				}
 
@@ -1114,10 +1079,10 @@ void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Ma
 }
 
 
-void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Matrix& X, vector<Matrix>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
+void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, Matrix4d& X, vector<Matrix4d>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
 		std::ofstream& out){
 
-	char ch;
+
 	// make flexible for different numbers of images for different cameras ....
 	Problem problem;
 
@@ -1133,9 +1098,6 @@ void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matr
 	vector<vector<double*> > transformations;
 	vector<double*> parameters;
 
-	//	cout << "Line 1848" << endl;
-	//	cin >> ch;
-
 	for (int i = 0; i < number_cameras; i++){
 		twoDpoints.push_back(vector<double*>());
 		transformations.push_back(vector<double*>());
@@ -1149,9 +1111,7 @@ void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matr
 	// assume that threeDpoints is already sized
 	Initialize3DPoints(COs, threeDpoints, number_points);
 
-
-
-	int minimum_number = number_images;
+	//int minimum_number = number_images;
 
 	vector<int> number_of_images_per_camera;
 
@@ -1161,24 +1121,20 @@ void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matr
 
 	// Get camera cali parameters .....
 	CopyFromCalibration(COs, camera_params);
-	Matrix A_hat(4, 4);
-
-	cout << "Halfway there .... " << endl;
-	//cin >> ch;
+	Matrix4d A_hat;
 
 	for (int j = 0; j < number_cameras; j++){
 		int non_blanks = 0;
 		for (int i = 0; i < number_images; i++) {
-			//for (int i = 0; i < 1; i++) {
 
 			if (COs[j].all_points[COs[j].number_internal_images_written + i].size() > 0){
 				// compute A for this image ....
-				A_hat = Zs[j]*Bs[i]*X.i();
+				A_hat = Zs[j]*Bs[i]*X.inverse();
 
 
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						transformations[j][i][in] = A_hat(r + 1, c + 1);
+						transformations[j][i][in] = A_hat(r, c);
 					}
 				}
 
@@ -1211,12 +1167,12 @@ void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matr
 
 				if (COs[j].all_points[COs[j].number_internal_images_written + i].size() > 0){
 					// compute A for this image ....
-					A_hat = Zs[j]*Bs[i]*X.i();
+					A_hat = Zs[j]*Bs[i]*X.inverse();
 
 
 					for (int r = 0, in = 0; r < 4; r++){
 						for (int c = 0; c < 4; c++, in++){
-							transformations[j][i][in] = A_hat(r + 1, c + 1);
+							transformations[j][i][in] = A_hat(r, c);
 						}
 					}
 

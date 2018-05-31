@@ -1,15 +1,30 @@
-//This code is a companion to the paper "Solving the Robot-World, Hand-Eye(s) Calibration Problem with Iterative Methods".  It should only be used to assess the manuscript by reviewers and not distributed.
+// This code is being distributed with no warranties whatsoever.
+//
+// Author: Amy Tabb.  Original release circa 2016.  Current date May 30, 2018.
+//
+//  If you use this code to calibrate a robot in an academic setting, please cite this paper!  Thanks a bunch.
+//@article{tabb_solving_2017,
+//	title = {Solving the robot-world hand-eye(s) calibration problem with iterative methods},
+//	volume = {28},
+//	issn = {1432-1769},
+//	url = {https://doi.org/10.1007/s00138-017-0841-7},
+//	doi = {10.1007/s00138-017-0841-7},
+//	abstract = {Robot-world, hand-eye calibration is the problem of determining the transformation between the robot end-effector and a camera, as well as the transformation between the robot base and the world coordinate system. This relationship has been modeled as                                                                           \$\$\{{\textbackslash}mathbf \{AX\}\}=\{{\textbackslash}mathbf \{ZB\}\}\$\$                                                                                    AX                        =                        ZB                                                                            , where                                                                           \$\$\{{\textbackslash}mathbf \{X\}\}\$\$                                                            X                                                       and                                                                           \$\$\{{\textbackslash}mathbf \{Z\}\}\$\$                                                            Z                                                       are unknown homogeneous transformation matrices. The successful execution of many robot manipulation tasks depends on determining these matrices accurately, and we are particularly interested in the use of calibration for use in vision tasks. In this work, we describe a collection of methods consisting of two cost function classes, three different parameterizations of rotation components, and separable versus simultaneous formulations. We explore the behavior of this collection of methods on real datasets and simulated datasets and compare to seven other state-of-the-art methods. Our collection of methods returns greater accuracy on many metrics as compared to the state-of-the-art. The collection of methods is extended to the problem of robot-world hand-multiple-eye calibration, and results are shown with two and three cameras mounted on the same robot.},
+//	number = {5},
+//	journal = {Machine Vision and Applications},
+//	author = {Tabb, Amy and Ahmad Yousef, Khalil M.},
+//	month = aug,
+//	year = {2017},
+//	pages = {569--590}
+//}
+//
+// If you've inherited this code, the original source is from the github repository amy-tabb .  Check back there for updates periodically, particularly as it pertains to OpenCV versions.
+// You're welcome to modify it to your needs for other projects.
 
-
-
-#include "Tabb_AhmadYousef_RWHEC_Jan2017_main.hpp"
+#include "Tabb_AhmadYousef_RWHEC_Jun2018_main.hpp"
 
 #include "DirectoryFunctions.hpp"
 #include "StringFunctions.hpp"
-#include "ComparisonMethods.hpp"
-
-#include <newmat/newmatap.h>     // newmat advanced functions
-#include <newmat/newmatio.h>     // newmat headers including output functions
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -23,6 +38,8 @@ bool VERBOSE = true;
 
 int main(int argc, char** argv) {
 	google::InitGoogleLogging(argv[0]);
+
+	Eigen::initParallel();
 
 	/////////////////////////////************************************/////////////////////////////
 	string source_dir;
@@ -101,7 +118,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		int chess_h, int chess_w, string source_dir, string write_dir, bool do_camcali, bool do_rwhec, bool do_reconstruction, bool verbose){
 
 	string command;
-	int ret;
+	//int ret;
 	int robot_mounted_cameras = 0;
 	vector<string> camera_names;
 	string image_dir;
@@ -124,8 +141,9 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	string external_dir = source_dir + "/images";
 
 
-	vector<vector<Matrix> > As;
-	vector<Matrix> Bs;
+
+	vector<vector<Matrix4d> > As;
+	vector<Matrix4d> Bs;
 	int number_cameras;
 
 	vector<CaliObjectOpenCV2> COs;
@@ -135,7 +153,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	if (do_camcali){
 		for (int i = 0; i < robot_mounted_cameras; i++){
 			command = "mkdir " + write_dir + "/camera_results" + ToString<int>(i);
-			ret = system(command.c_str());
+			int ret = system(command.c_str());
 		}
 
 		for (int k = 0; k < robot_mounted_cameras; k++){
@@ -174,24 +192,24 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			out.close();
 
 
-			Matrix A1(4, 4);
-			Matrix B1(4, 4);
-			Matrix temp_matrix;
+			MatrixXd A1(4, 4);
+			MatrixXd B1(4, 4);
+			MatrixXd temp_matrix;
 
 
-			As.push_back(vector<Matrix>());
+			As.push_back(vector<Matrix4d>());
 
 			number_cameras = COs[k].Rts.size();
 
 			// convert the external parameters from the camera calibration process into the A matrices
 			for (int i = 0; i < int(COs[k].Rts.size()); i++){
 				if (COs[k].Rts[i].size() > 0){
-					A1 = 0;
-					A1(4, 4) = 1;
+					A1.setIdentity();
+					//A1(4, 4) = 1;
 
 					for (int r = 0; r < 3; r++){
 						for (int c = 0; c < 4; c++){
-							A1(r + 1, c + 1) = COs[k].Rts[i][r][c];
+							A1(r, c) = COs[k].Rts[i][r][c];
 						}
 					}
 					As[k].push_back(A1);
@@ -246,8 +264,8 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 			// write the As and image points
 			for (int i = 0; i < int(COs[k].Rts.size()); i++){
-				if (As[k][i].nrows() > 0){
-					out << As[k][i]; // << endl;
+				if (As[k][i].rows() > 0){
+					out << As[k][i] << endl;
 
 					for (int j = 0; j < number_points; j++){
 						out << COs[k].all_points[COs[k].number_internal_images_written + i][j].x << " " << COs[k].all_points[COs[k].number_internal_images_written + i][j].y << " ";
@@ -281,13 +299,15 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				COs[k].ReadImages(external_dir, 1);
 
 				COs[k].image_size = COs[k].external_images[0].size();
-				//COs[k].image_size.height =
+
 
 				int number_images;
 				int flag_present;
 				int corner_count = chess_h*chess_w;
 
 				in >> number_images;
+
+				cout << "Number images " << number_images << endl;
 
 				COs[k].A.resize(3, vector<double>(3, 1));
 
@@ -302,22 +322,26 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					in >> COs[k].k[i];
 				}
 
-
 				vector< cv::Point3f> corners_3d(chess_h*chess_w);
 				vector<cv::Point2f> image_points(corner_count);
-				Matrix m0;
-				Matrix m4(4, 4);
-				As.push_back(vector<Matrix>());
+
+				Matrix4d m4;  m4.setIdentity();
+				As.push_back(vector<Matrix4d>());
+
+				vector<bool> saved_flag;
 
 				for (int i = 0; i < number_images; i++){
 					in >> flag_present;
 
+					saved_flag.push_back(flag_present);
+
+					As[k].push_back(m4);
 					if (flag_present == true){
-						As[k].push_back(m4);
+
 						COs[k].all_points.push_back(image_points);
 						number_images_per[k]++;
 					}	else {
-						As[k].push_back(m0);
+
 						COs[k].all_points.push_back(vector<cv::Point2f>());
 					}
 				}
@@ -328,18 +352,18 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				}
 
 				for (int i = 0; i < number_images; i++){
-					if (As[k][i].nrows() > 0){
+					if (saved_flag[i] == true){
 						COs[k].all_3d_corners.push_back(corners_3d);
 					}
 				}
 
 				// read As and image points.
 				for (int i = 0; i < number_images; i++){
-					if (As[k][i].nrows() > 0){
+					if (saved_flag[i] == true){
 
 						for (int r = 0; r < 4; r++){
 							for (int c = 0; c < 4; c++){
-								in >>  As[k][i](r + 1, c + 1);
+								in >>  As[k][i](r, c);
 							}
 						}
 
@@ -362,9 +386,9 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	//
 	/////////////////////////// END CAMERA CALIBRATION ////////////////////////////
 
-	Matrix Rz(3, 3);
-	Matrix Ry(3, 3);
-	Matrix Rx(3, 3);
+	Matrix3d Rz;
+	Matrix3d Ry;
+	Matrix3d Rx;
 
 	////////////////////////// ROBOT SECTION /////////////////////////////////////////
 
@@ -379,18 +403,13 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		ReadRobotFileRobotCaliTxt(filename, Bs);
 	}
 
-	Matrix I(3, 3);
-	I = 0;
-	I(1, 1) = 1;
-	I(2, 2) = 1;
-	I(3, 3) = 1;
 
-	Matrix TestR(3, 3);
-	Matrix X(4, 4);
-	Matrix Z(4, 4);
+	Matrix3d TestR;
+	Matrix4d X;
+	Matrix4d Z;
 
-	X = 0; X(4, 4) = 1;
-	Z = 0; Z(4, 4) = 1;
+	X.setIdentity();  Z.setIdentity();
+
 
 	double null_triple[3];
 	null_triple[0] = 0;
@@ -409,8 +428,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	vector<double> translation_error;
 	vector<double> whole_error;
 	vector<vector<double> > reprojection_error;
-	vector<double> squared_translation_error;
-	vector<double> denominator_error;
+
 	vector<double> axis_angle_difference;
 	vector<double> reconstruction_reprojection_errors;
 	vector<double> difference_between_reconstruction_and_original;
@@ -419,7 +437,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	string descriptor_string;
 	string abbreviated_descriptor_string;
 	string write_result_directory;
-	vector<Matrix> Zs;
+	vector<Matrix4d> Zs;
 	PARAM_TYPE param_type;
 	COST_TYPE cost_type;
 
@@ -434,12 +452,12 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 	bool separable = false;
 
-	vector<Matrix> AsComps;
-	vector<Matrix> BsComps;
+	vector<Matrix4d> AsComps;
+	vector<Matrix4d> BsComps;
 
 	if (robot_mounted_cameras == 1){
 		for (int i = 0; i < int(As[0].size()); i++){
-			if (As[0][i].nrows() > 0){
+			if (As[0][i].rows() > 0){
 				AsComps.push_back(As[0][i]);
 				BsComps.push_back(Bs[i]);
 			}
@@ -479,7 +497,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		case 2:{
 			descriptor_string = "Quaternion c1 simultaneous ";
 			abbreviated_descriptor_string = "Q_c1_simul";
-			param_type = Quaternion;
+			param_type = Cali_Quaternion;
 			cost_type = c1;
 			separable = false;
 		} break;
@@ -500,7 +518,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		case 5:{
 			descriptor_string = "Quaternion c2 simultaneous";
 			abbreviated_descriptor_string = "Q_c2_simul";
-			param_type = Quaternion;
+			param_type = Cali_Quaternion;
 			cost_type = c2;
 			separable = false;
 		} break;
@@ -521,7 +539,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		case 8:{
 			descriptor_string = "Quaternion c1 separable ";
 			abbreviated_descriptor_string = "Q_c1_separable";
-			param_type = Quaternion;
+			param_type = Cali_Quaternion;
 			cost_type = c1;
 			separable = true;
 		} break;
@@ -542,7 +560,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		case 11:{
 			descriptor_string = "Quaternion c2 separable ";
 			abbreviated_descriptor_string = "Q_c2_separable";
-			param_type = Quaternion;
+			param_type = Cali_Quaternion;
 			cost_type = c2;
 			separable = true;
 		} break;
@@ -561,7 +579,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		case 14:{
 			descriptor_string = "Quaternion, Reprojection Error I";
 			abbreviated_descriptor_string = "Q_RPI";
-			param_type = Quaternion;
+			param_type = Cali_Quaternion;
 			cost_type = rp1;
 		} break;
 		case 15:{
@@ -579,7 +597,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		case 17:{
 			descriptor_string = "Quaternion, Reprojection Error II ";
 			abbreviated_descriptor_string = "Q_RPII";
-			param_type = Quaternion;
+			param_type = Cali_Quaternion;
 			cost_type = rp2;
 		} break;
 		}
@@ -600,7 +618,9 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 
 			switch (cost_type){
-			case c1: {		}
+			case c1: {
+				 // This case intentionally left blank
+			}
 			case c2: {
 				switch (param_type){
 				case Euler: {
@@ -609,7 +629,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				case AxisAngle: {
 					out << "Axis Angle parameterization  ";
 				} break;
-				case Quaternion: {
+				case Cali_Quaternion: {
 					out << "Quaternion parameterization  ";
 				} break;
 				}
@@ -626,8 +646,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				} break;
 				}
 
-				// expand to more than one ....
-				//if (robot_mounted_cameras == 1)
+
 				{
 
 					for (int i = 0; i < (robot_mounted_cameras + 1)*7; i++){
@@ -635,7 +654,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					}
 
 					// x array is x, then zs.
-					if (param_type == Quaternion){
+					if (param_type == Cali_Quaternion){
 						for (int i = 0; i < (robot_mounted_cameras + 1); i++){
 							ceres::AngleAxisToQuaternion(null_triple, &xarray[7*i]);
 						}
@@ -662,7 +681,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 					// convert to the matrix representation
 					for (int i = 1; i < (robot_mounted_cameras + 1); i++)
-						//int i = 0;
 					{
 
 
@@ -673,7 +691,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 						case AxisAngle: {
 							Convert6ParameterAxisAngleRepresentationIntoMatrix<double>(&xarray[7*i], &xm[0]);
 						} break;
-						case Quaternion: {
+						case Cali_Quaternion: {
 							Convert7ParameterQuaternionRepresentationIntoMatrix<double>(&xarray[7*i], &xm[0]);
 						} break;
 						}
@@ -681,13 +699,12 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 						for (int r = 0, in = 0; r < 4; r++){
 							for (int c = 0; c < 4; c++, in++){
-								Zs[i - 1](r + 1, c + 1) = xm[in];
+								Zs[i - 1](r, c) = xm[in];
 							}
 						}
 
 					}
 
-					//double zm[16];
 					switch (param_type){
 					case Euler: {
 						Convert6ParameterEulerAngleRepresentationIntoMatrix<double>(&xarray[0], &xm[0]);
@@ -695,7 +712,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					case AxisAngle: {
 						Convert6ParameterAxisAngleRepresentationIntoMatrix<double>(&xarray[0], &xm[0]);
 					} break;
-					case Quaternion: {
+					case Cali_Quaternion: {
 						Convert7ParameterQuaternionRepresentationIntoMatrix<double>(&xarray[0], &xm[0]);
 					} break;
 					}
@@ -704,18 +721,20 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					// convert to the X, Z representation
 					for (int r = 0, in = 0; r < 4; r++){
 						for (int c = 0; c < 4; c++, in++){
-							X(r + 1, c + 1) = xm[in];
+							X(r, c) = xm[in];
 						}
 					}
 
 					if (cost_type == c2){
-						X = X.i();
+						X = X.inverse().eval();
 					}
 
 
 				}
 			} break;
-			case rp1: {}
+			case rp1: {
+				/// no break at the end intentional
+			}
 			case rp2: {
 				switch (param_type){
 				case Euler: {
@@ -724,7 +743,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				case AxisAngle: {
 					out << "Axis Angle parameterization  ";
 				} break;
-				case Quaternion: {
+				case Cali_Quaternion: {
 					out << "Quaternion parameterization  ";
 				} break;
 				}
@@ -745,7 +764,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					xarray[i] = 0;
 				}
 
-				if (param_type == Quaternion){
+				if (param_type == Cali_Quaternion){
 					for (int i = 0; i < (robot_mounted_cameras + 1); i++){
 						ceres::AngleAxisToQuaternion(null_triple, &xarray[7*i]);
 					}
@@ -775,7 +794,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					case AxisAngle: {
 						Convert6ParameterAxisAngleRepresentationIntoMatrix<double>(&xarray[7*i], &xm[0]);
 					} break;
-					case Quaternion: {
+					case Cali_Quaternion: {
 						Convert7ParameterQuaternionRepresentationIntoMatrix<double>(&xarray[7*i], &xm[0]);
 					} break;
 					}
@@ -783,7 +802,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 					for (int r = 0, in = 0; r < 4; r++){
 						for (int c = 0; c < 4; c++, in++){
-							Zs[i - 1](r + 1, c + 1) = xm[in];
+							Zs[i - 1](r, c) = xm[in];
 						}
 					}
 				}
@@ -796,7 +815,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				case AxisAngle: {
 					Convert6ParameterAxisAngleRepresentationIntoMatrix<double>(&xarray[0], &xm[0]);
 				} break;
-				case Quaternion: {
+				case Cali_Quaternion: {
 					Convert7ParameterQuaternionRepresentationIntoMatrix<double>(&xarray[0], &xm[0]);
 				} break;
 				}
@@ -804,11 +823,11 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 				for (int r = 0, in = 0; r < 4; r++){
 					for (int c = 0; c < 4; c++, in++){
-						X(r + 1, c + 1) = xm[in];
+						X(r, c) = xm[in];
 					}
 				}
 
-				X = X.i();
+				X = X.inverse().eval();
 
 				if (cost_type == rp2){
 					CopyToCalibration(COs, camera_parameters);
@@ -832,6 +851,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 			double error;
 			error  = 0;
+
 			for (int i = 0; i < robot_mounted_cameras; i++){
 				cout << "Size " << As[i].size() << ", " << Bs.size() << ", " << Zs.size() << endl;
 
@@ -854,14 +874,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			}
 			out << "Summed translation error " << error << endl;
 			translation_error.push_back(error);
-			squared_translation_error.push_back(error*error);
-
-
-			error  = 0;
-			for (int i = 0; i < robot_mounted_cameras; i++){
-				error += AssessTranslationErrorDenominator(As[i], Bs, X, Zs[i]);
-			}
-			denominator_error.push_back(error*error);
 
 			error  = 0;
 			for (int i = 0; i < robot_mounted_cameras; i++){
@@ -939,8 +951,8 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			in.open(trans_file.c_str());
 
 			in >> temp_string; /// X
-			for (int r = 1; r <= 4; r++){
-				for (int c = 1; c <= 4; c++){
+			for (int r = 0; r < 4; r++){
+				for (int c = 0; c < 4; c++){
 					in >> X(r, c);
 				}
 			}
@@ -949,8 +961,8 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				in >> temp_string >> temp_string;
 
 
-				for (int r = 1; r <= 4; r++){
-					for (int c = 1; c <= 4; c++){
+				for (int r = 0; r < 4; r++){
+					for (int c = 0; c < 4; c++){
 						in >> Zs[i](r, c);
 					}
 				}
@@ -990,8 +1002,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			}
 
 
-
-
 			// copy back the parameters in case they got muddled.
 			CopyToCalibration(COs, camera_parameters_from_cali);
 
@@ -1007,7 +1017,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	if (do_rwhec){
 		filename = write_dir + "/comparisons.txt";
 		out.open(filename.c_str());
-
+		out << "Errors are normalized by the number of robot positions, which is " << number_cameras << " summed for all cameras, which is " << robot_mounted_cameras << " excepting the rms" << endl;
 		out << setw(36) << "Method name "
 				<< setw(20) << "Rotation error"
 				<< setw(20) << "Rot error - angle"
@@ -1016,13 +1026,16 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				<< setw(20*robot_mounted_cameras) << "reprojection error"
 				<< setw(20*robot_mounted_cameras) << "RMS reprojection" << endl;
 
+		std::cout.precision(6);
+
 		for (int i = 0; i < int(rotation_error.size()); i++){
 			out << i << " " << setw(36);
 			out << name_vector[i];
-			out << setw(20) << rotation_error[i]
-											  << setw(20) << axis_angle_difference[i]
-																				   << setw(20) <<  translation_error[i]
-																													 << setw(20) << whole_error[i];
+			out <<  " " << rotation_error[i]
+				 << " " << setw(20) << axis_angle_difference[i]
+																				   << setw(20) <<  translation_error[i];
+
+			out << setw(20) << whole_error[i];
 
 			for (int j = 0; j < robot_mounted_cameras; j++){
 				out <<  setw(20) << reprojection_error[i][j];
@@ -1039,37 +1052,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		out << endl;
 		out << "___________________________________________________________________________________" << endl;
 		out << endl;
-		out << "Now errors are normalized by the number of robot positions, which is " << number_cameras << "  excepting the rms" << endl;
-		out << setw(36) << "Method name "
-				<< setw(20) << "Rotation error"
-				<< setw(20) << "Rot error - angle"
-				<< setw(20) << "Translation error"
-				<< setw(20) << "Whole error"
-				<< setw(20*robot_mounted_cameras) << "reprojection error"
-				<< setw(20*robot_mounted_cameras) << "RMS reprojection"
-				<< setw(20) << "D&H translation error"<< endl;
-		for (int i = 0; i < int(rotation_error.size()); i++){
-			out << i << " " << setw(36);
-			out << name_vector[i];
-			out << setw(20) << rotation_error[i]/double(total_number_images_all_cameras);
-			out << setw(20) << axis_angle_difference[i]/double(total_number_images_all_cameras);
-			out << setw(20) <<  translation_error[i]/double(total_number_images_all_cameras);
-			out << setw(20) << whole_error[i]/double(total_number_images_all_cameras);
-
-
-
-
-			for (int j = 0; j < robot_mounted_cameras; j++){
-				out <<  setw(20) << reprojection_error[i][j]/double(number_images_per[j]);
-			}
-
-
-			for (int j = 0; j < robot_mounted_cameras; j++){
-				out <<  setw(20) << sqrt((1.0/double(As.size()*number_images_per[j]*COs[0].all_3d_corners[0].size())) * reprojection_error[i][j]);
-			}
-			out << endl;
-
-		}
 
 		out.close();
 	}
@@ -1135,17 +1117,17 @@ void WriteCaliFile(CaliObjectOpenCV2* CO, std::ofstream& out){
 	}
 }
 
-void WriteCaliFile(CaliObjectOpenCV2* CO, vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z, std::ofstream& out){
+void WriteCaliFile(CaliObjectOpenCV2* CO, vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z, std::ofstream& out){
 	out << As.size() << endl;
-	//Matrix lastA(4, 4);
-	Matrix newA(4, 4);
+
+	Matrix4d newA(4, 4);
 
 
-	vector<Matrix> newAs;
+	vector<Matrix4d> newAs;
 	int n = As.size();
 	for (int i = 0; i < n; i++){
 
-		newA = Z*Bs[i]*X.i();
+		newA = Z*Bs[i]*X.inverse();
 
 		out << "image" << ToString<int>(i) << ".png " << " ";
 		for (int r = 0; r < 3; r++){
@@ -1156,12 +1138,12 @@ void WriteCaliFile(CaliObjectOpenCV2* CO, vector<Matrix>& As, vector<Matrix>& Bs
 
 		for (int r = 0; r < 3; r++){
 			for (int c = 0; c < 3; c++){
-				out << newA(r + 1,c + 1) << " ";
+				out << newA(r,c) << " ";
 			}
 		}
 
 		for (int r = 0; r < 3; r++){
-			out << newA(r + 1,4) << " ";
+			out << newA(r,3) << " ";
 		}
 
 		for (int r = 0; r < int(CO->k.size()); r++){
@@ -1174,28 +1156,28 @@ void WriteCaliFile(CaliObjectOpenCV2* CO, vector<Matrix>& As, vector<Matrix>& Bs
 }
 
 
-void ReadRobotFileRobotCaliTxt(string filename, vector<Matrix>& Bs){
+void ReadRobotFileRobotCaliTxt(string filename, vector<Matrix4d>& Bs){
 
-	Matrix newR(3, 3);
+//	Matrix3d newR;
 
-	ColumnVector qt(4);
-	ColumnVector cv(3);
-	ColumnVector rv(3);
+//	ColumnVector qt(4);
+//	ColumnVector cv(3);
+//	ColumnVector rv(3);
 
 
-	Matrix Rx(3, 3);
-	Matrix Ry(3, 3);
-	Matrix Rz(3, 3);
+//	Matrix Rx(3, 3);
+//	Matrix Ry(3, 3);
+//	Matrix Rz(3, 3);
 
-	Matrix B1(4, 4);
+	Matrix4d B1;
 
 	std::ifstream in;
 
 	in.open(filename.c_str());
-
-	ColumnVector r_v(6);
-	vector<ColumnVector> robot_params;
-	ColumnVector C(3);
+//
+//	ColumnVector r_v(6);
+//	vector<ColumnVector> robot_params;
+//	ColumnVector C(3);
 
 
 	int N;
@@ -1203,8 +1185,8 @@ void ReadRobotFileRobotCaliTxt(string filename, vector<Matrix>& Bs){
 
 	for (int i = 0; i < N; i++){
 
-		for (int r = 1; r <= 4; r++){
-			for (int c = 1; c <= 4; c++){
+		for (int r = 0; r < 4; r++){
+			for (int c = 0; c < 4; c++){
 				in >> B1(r, c);
 			}
 		}
@@ -1214,68 +1196,112 @@ void ReadRobotFileRobotCaliTxt(string filename, vector<Matrix>& Bs){
 	in.close();
 }
 
-double AssessErrorWhole(vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z){
+double AssessErrorWhole(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
-	Matrix Htest(4, 4);
+	Matrix4d H;
+
+	cout << "error " << error << endl;
+	double number_stops = Bs.size();
+
 	for (int i = 0; i < int(Bs.size()); i++){
 		// try once for now .....
 		if (As[i].size() > 0){
-			Htest = As[i]*X - Z*Bs[i];
+			H = As[i]*X - Z*Bs[i];
 
-			for (int r = 1; r <= 4; r++){
-				for (int c = 1; c <= 4; c++){
-					error = error + pow(Htest(r, c), 2.0);
+			cout << "H" << H << endl;
+			for (int r = 0; r < 4; r++){
+				for (int c = 0; c < 4; c++){
+					error +=  H(r, c)*H(r, c);
 				}
 			}
+			//cout << "Error after one image " << error << endl;
 		}
 	}
 
-	return error;
+	return error/number_stops;
 }
 
-double AssessRotationError(vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z){
+double AssessRotationError(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
 	double local_error = 0;
-	Matrix Htest(4, 4);
-	Matrix R(3, 3);
+
+
+	double number_stops = Bs.size();
+	Matrix3d RA;  Matrix3d RZ;  Matrix3d RX; Matrix3d RB;
+	Matrix3d Rdiff;
+
+		for (int r = 0; r < 3; r++){
+			for (int c = 0; c < 3; c++){
+				RZ(r, c) = Z(r, c);
+				RX(r, c) = X(r, c);
+			}
+		}
+
+
+
 	for (int i = 0; i < int(Bs.size()); i++){
 		// try once for now .....
 		if (As[i].size() > 0){
-			R = As[i].SubMatrix(1, 3, 1, 3)*X.SubMatrix(1, 3, 1, 3) - Z.SubMatrix(1, 3, 1, 3)*Bs[i].SubMatrix(1, 3, 1, 3);
-			local_error = 0;
-			for (int r = 1; r <= 3; r++){
-				for (int c = 1; c <= 3; c++){
-					local_error += R(r, c)*R(r, c);
+			for (int r = 0; r < 3; r++){
+				for (int c = 0; c < 3; c++){
+					RA(r, c) = As[i](r, c);
+					RB(r, c) = Bs[i](r, c);
 				}
 			}
 
-			//R.NormFrobenius()
+			Rdiff = RA*RX - RZ*RB;
+			local_error = 0;
+			for (int r = 0; r < 3; r++){
+				for (int c = 0; c < 3; c++){
+					local_error += Rdiff(r, c)*Rdiff(r, c);
+				}
+			}
+
 			error += local_error;
 		}
 	}
 
-	return error;
+	return error/number_stops;
 }
 
-double AssessRotationErrorAxisAngle(vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z){
+double AssessRotationErrorAxisAngle(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
 	double local_error = 0;
-	Matrix Htest(4, 4);
-	Matrix R0(3, 3);
-	Matrix R1(3, 3);
-	Matrix R_relative;
+
+	Matrix3d R0;
+	Matrix3d R1;
+	Matrix3d R_relative;
+
+	Matrix3d RA;  Matrix3d RZ;  Matrix3d RX; Matrix3d RB;
+
+	for (int r = 0; r < 3; r++){
+		for (int c = 0; c < 3; c++){
+			RZ(r, c) = Z(r, c);
+			RX(r, c) = X(r, c);
+		}
+	}
+
 
 	double RV[9];
 	double aa[3];
+	double number_stops = Bs.size();
 	for (int i = 0; i < int(Bs.size()); i++){
 		// try once for now .....
 		if (As[i].size() > 0){
-			R0 = As[i].SubMatrix(1, 3, 1, 3)*X.SubMatrix(1, 3, 1, 3);
-			R1 = Z.SubMatrix(1, 3, 1, 3)*Bs[i].SubMatrix(1, 3, 1, 3);
+			for (int r = 0; r < 3; r++){
+					for (int c = 0; c < 3; c++){
+						RA(r, c) = As[i](r, c);
+						RB(r, c) = Bs[i](r, c);
+					}
+			}
 
-			R_relative = R1.t()*R0;
-			for (int r = 1, index = 0; r <= 3; r++){
-				for (int c = 1; c <= 3; c++, index++){
+
+			R0 = RA*RX;
+			R1 = RZ*RB;
+
+			R_relative = R1.transpose()*R0;
+			for (int r = 0, index = 0; r < 3; r++){
+				for (int c = 0; c < 3; c++, index++){
 					RV[index] = R_relative(r, c);
 				}
 			}
@@ -1289,65 +1315,106 @@ double AssessRotationErrorAxisAngle(vector<Matrix>& As, vector<Matrix>& Bs, Matr
 		}
 	}
 
-	return error;
+	// remember to average amoung cameras when there is more than one camera.
+	return error/number_stops;
 }
 
 
 
-double AssessTranslationError(vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z){
+double AssessTranslationError(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
-	Matrix Htest(4, 4);
-	Matrix R(3, 3);
-	ColumnVector top_row(3);
-	ColumnVector bottom_row(3);
 
-	ColumnVector one_item;
+	Matrix3d RA;  Matrix3d RZ;
+	MatrixXd tx(3, 1);
+	MatrixXd ta(3, 1);
+	MatrixXd tb(3, 1);
+	MatrixXd tz(3, 1);
 
+	Matrix4d H;
+//	double number_stops = Bs.size();
+
+//	for (int i = 0; i < int(Bs.size()); i++){
+//		if (As[i].size() > 0){
+//			H = As[i]*X - Z*Bs[i];
+//
+//			//cout << "H" << H << endl;
+//			for (int r = 0; r < 4; r++){
+//				for (int c = 3; c < 4; c++){
+//					error +=  H(r, c)*H(r, c);
+//				}
+//			}
+//			//cout << "Error after one image " << error << endl;
+//		}
+//
+//	}
+
+
+	for (int r = 0; r < 3; r++){
+		for (int c = 0; c < 3; c++){
+			RZ(r, c) = Z(r, c);
+		}
+
+		tx(r, 0) = X(r, 3);
+		tz(r, 0) = Z(r, 3);
+	}
+
+	MatrixXd result0, result1;
+
+	double number_stops = Bs.size();
+
+	Matrix4d H1, H2;
 
 	for (int i = 0; i < int(Bs.size()); i++){
 		// try once for now .....
 		if (As[i].size() > 0){
-			top_row = As[i].SubMatrix(1, 3, 1, 3)*X.SubMatrix(1, 3, 4, 4) + As[i].SubMatrix(1, 3, 4, 4)
-																																																																																																																																																																																																										- Z.SubMatrix(1, 3, 1, 3)*Bs[i].SubMatrix(1, 3, 4, 4) - Z.SubMatrix(1, 3, 4, 4);
+			H1 = As[i]*X;
+			H2 = Z*Bs[i];
 
-			error += DotProduct(top_row, top_row);
+
+			// this is wrong.  top_row = As[i].SubMatrix(1, 3, 1, 3)*X.SubMatrix(1, 3, 4, 4) + As[i].SubMatrix(1, 3, 4, 4)
+			for (int r = 0; r < 3; r++){
+					for (int c = 0; c < 3; c++){
+						RA(r, c) = As[i](r, c);
+					}
+					ta(r, 0) = As[i](r, 3);
+					tb(r, 0) = Bs[i](r, 3);
+			}
+
+			result0 = RA*tx + ta - (RZ*tb + tz);
+
+//			cout << "H1 " << H1 << endl;
+//			cout << "H2 " << H2 << endl;
+//
+//			cout << "result0 " << result0 << endl;
+//			cout << "result1 " << result1 << endl;
+//
+//			char fg; cin >> fg;
+
+			//cout << "translation result " << result0 << endl;
+
+			for (int r = 0; r < 3; r++){
+				//error += (H1(r,3) - H2(r, 3))*(H1(r,3) - H2(r, 3));
+				error += result0(r, 0)*result0(r, 0);
+			}
+
+
 		}
 	}
 
-	return sqrt(error);
+	// this error is squared within the parentheses
+	// Within the main loop, average amoung cameras for multi-camera datasets.
+	return (error/number_stops);
 }
 
-double AssessTranslationErrorDenominator(vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z){
-	double error = 0;
-	Matrix Htest(4, 4);
-	Matrix R(3, 3);
-	ColumnVector top_row(3);
-	ColumnVector bottom_row(3);
-
-	ColumnVector one_item;
-
-
-	for (int i = 0; i < int(Bs.size()); i++){
-		// try once for now .....
-		if (As[i].size() > 0){
-			top_row = As[i].SubMatrix(1, 3, 1, 3)*X.SubMatrix(1, 3, 4, 4) + As[i].SubMatrix(1, 3, 4, 4);
-
-			error += DotProduct(top_row, top_row);
-		}
-	}
-
-	return sqrt(error);
-}
-
-double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<Matrix>& As, vector<Matrix>& Bs, Matrix& X, Matrix& Z, std::ofstream& out, string directory, int cam_number){
+double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z, std::ofstream& out, string directory, int cam_number){
 
 
 	double reproj_error = 0;
 	vector<cv::Point2f> imagePoints2;
 	double err;
-	Matrix newA(4, 4);
+	Matrix4d newA;
 
-	vector<Matrix> newAs;
+	vector<Matrix4d> newAs;
 	cv::Mat R = cv::Mat::eye(3, 3, CV_64F);
 	cv::Mat rvec = cv::Mat::zeros(3, 1, CV_64F);
 	cv::Mat tvec = cv::Mat::zeros(3, 1, CV_64F);
@@ -1373,13 +1440,13 @@ double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<Matrix>& As, vec
 	for (int i = 0; i < int(As.size()); i++){
 		if (CO->all_points[CO->number_internal_images_written + i].size() > 0){
 
-			newA = Z*Bs[i]*X.i();
+			newA = Z*Bs[i]*X.inverse();
 
 			for (int r = 0; r < 3; r++){
 				for (int c = 0; c < 3; c++){
-					R.at<double>(r, c) = newA(r + 1, c + 1);
+					R.at<double>(r, c) = newA(r, c);
 				}
-				tvec.at<double>(r, 0) = newA(r + 1, 4);
+				tvec.at<double>(r, 0) = newA(r, 3);
 			}
 
 			cv::Rodrigues(R, rvec);
@@ -1408,20 +1475,18 @@ double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<Matrix>& As, vec
 		}
 
 	}
-	//<< setprecision(12)
+
 	out << endl << "Summed reproj error "  << reproj_error << endl << endl;
 
 
 	for (int i = 0; i < int(As.size()); i++){
 
-		newA = Z*Bs[i]*X.i();
+		newA = Z*Bs[i]*X.inverse();
 
 
 		out << "newA for i " << endl << newA << endl;
 	}
 
-	//cout << "Exit " << endl;
-	//cin >> ch;
 	return reproj_error;
 }
 

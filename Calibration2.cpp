@@ -3,22 +3,14 @@
  *
  *  Created on: Jun 26, 2014
  *      Author: atabb
+ *      Updated: May 25, 2018 to use Eigen instead of newmat.
+ *      atabb
  */
 #include "Calibration2.hpp"
 #include "StringFunctions.hpp"
 
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
 
-#include <opencv2/calib3d/calib3d.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-
-#include <opencv2/core/core.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
-//#include <opencv2/legacy/legacy.hpp>
+using namespace cv;
 
 CaliObjectOpenCV2::CaliObjectOpenCV2(int i, int w, int h,  double s_w_i, double s_h_i){
 
@@ -28,8 +20,11 @@ CaliObjectOpenCV2::CaliObjectOpenCV2(int i, int w, int h,  double s_w_i, double 
 	mean_reproj_error = 0;
 	mm_height = s_h_i;
 	mm_width = s_w_i;
-	image_size =  cvSize(0, 0);
+	image_size =  cv::Size(0, 0);
 	text_file = "";
+
+	chess_h_aux = 0;
+	mean_ext_reproj_error = 0;
 
 }
 
@@ -45,9 +40,6 @@ void CaliObjectOpenCV2::ReadImages(string internal_dir, bool flag){
 
 	im_names.clear();
 
-	//string temp_dir = internal_dir + "/images";
-	//string temp_dir =  internal_dir + cali_objects[i]->GUID;
-	//	current_dir = write_dir + "/Cam" + ToString<int>(i)	+ "/external";
 	cout << "Current dir " << internal_dir << endl;
 	ReadDirectory(internal_dir, im_names);
 
@@ -66,16 +58,12 @@ void CaliObjectOpenCV2::ReadImages(string internal_dir, bool flag){
 		}	else {
 			text_file = filename;
 			cout << "Set filename! " << text_file << endl;
-			//char ch; cin >> ch;
 		}
 	}
-
-	//	cali_objects[i]->AccumulateCorners(write_dir);
 }
 
 bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 
-	//IplImage        *cimage = 0,		*gimage = 0, *result = 0;
 	cv::Mat im, gimage, result;
 	string current_name;
 	bool corner_found;
@@ -91,15 +79,7 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 	cv::Size boardsize;
 	boardsize.height = chess_h;
 	boardsize.width = chess_w;
-	//bool
 
-	//	string text_name;
-	//	ofstream out;
-	//	text_name = dir + "/data" + ToString<int>(camera_number) + ".txt";
-	//	out.open(text_name.c_str());
-
-
-	//for (int i = 0; i < int(images_to_process.size()); i++){
 	number_internal_images_written = 0;
 	cout << "Doing internal images now .... " << endl;
 	for (int i = 0; i <  int(internal_images.size()); i++){
@@ -110,22 +90,19 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 		im = internal_images[i];
 		cv::cvtColor(im, gimage, CV_BGR2GRAY);
 
-		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		// This is a difference in between OpenCV current version and past.
+		//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		/// Current version -- Opencv 3.4.0
+		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK + CALIB_CB_FILTER_QUADS);
 
 		if (corner_found) {
 
 			// need to flip the orientation, possibly ...
-
-			//corners[chess_w*chess_h];
-
 			first_point = pointBuf[0];
 			last_point = pointBuf[chess_w*chess_h - 1];
 
 			if (first_point.y < last_point.y){
-				//if (first_point.x > last_point.x){
 				cout << "WRONG ORIENTATION! " << endl;
-
-
 				for (int k=0; k<corner_count; k++) {
 
 					flipped_points[k] = pointBuf[chess_w*chess_h - 1 - k];
@@ -137,9 +114,9 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 			}
 
 			some_found = true;
-			// refine the corner positions
-			cv::cornerSubPix( gimage, pointBuf, cv::Size(11,11),
-					cv::Size(-1,-1), cv::TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
+			//			// refine the corner positions
+			cornerSubPix(gimage, pointBuf, Size(11, 11), Size(-1, -1),
+					TermCriteria(CV_TERMCRIT_EPS + CV_TERMCRIT_ITER, 30, 0.1));
 
 
 			// draw detected corner points in the current frame
@@ -149,18 +126,14 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 
 			cout << "Number of patterns " << all_points.size() << endl;
 			number_internal_images_written++;
-
-
 		}
 	}
 
 
 
 	cout << "Doing external images now .... " << endl;
-	//for (int i = 0; i < 8; i++){
 	for (int i = 0; i <  int(external_images.size()); i++){
 		cout << "Looking for corners " << i << endl;
-		//for (int i = 0; i < int(images_to_process.size()); i++){
 		// find corners
 
 		im = external_images[i];
@@ -168,7 +141,10 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 
 		cv::imwrite("gray.png", gimage);
 
-		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		/// < OpenCV 3.4.0
+		//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		/// Current version -- Opencv 3.4.0
+		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK + CALIB_CB_FILTER_QUADS);
 
 		if (!corner_found){
 			cout << "Trying default option " << endl;
@@ -177,17 +153,20 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 
 		if (!corner_found){
 			cout << "Trying  option one" << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_NORMALIZE_IMAGE);
+			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_NORMALIZE_IMAGE);
+			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_NORMALIZE_IMAGE);
 		}
 
 		if (!corner_found){
 			cout << "Trying  option two" << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_FILTER_QUADS);
+			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_FILTER_QUADS);
+			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_FILTER_QUADS);
 		}
 
 		if (!corner_found){
 			cout << "Trying  option three" << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH);
+			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH);
+			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH);
 		}
 
 		if (corner_found) {
@@ -200,18 +179,14 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 			last_point = pointBuf[chess_w*chess_h - 1];
 
 			if (first_point.y < last_point.y){
-				//if (first_point.x > last_point.x){
 				cout << "WRONG ORIENTATION! " << endl;
-
 
 				for (int k=0; k<corner_count; k++) {
 
 					flipped_points[k] = pointBuf[chess_w*chess_h - 1 - k];
-
 				}
 
 				pointBuf.swap(flipped_points);
-
 			}
 
 			some_found = true;
@@ -219,19 +194,12 @@ bool CaliObjectOpenCV2::AccumulateCorners(bool draw_corners){
 			cv::cornerSubPix( gimage, pointBuf, cv::Size(11,11),
 					cv::Size(-1,-1), cv::TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
 
-
 			if (draw_corners){
 				// draw detected corner points in the current frame
 				cv::drawChessboardCorners(external_images[i], boardsize, cv::Mat(pointBuf), true);
 			}
 
 			all_points.push_back(pointBuf);
-			//				for (int k=0; k<corner_count; k++) {
-			//					//all_corners.push_back(corners[k]);
-			//
-			//					//out << corners[k].x << ", " << corners[k].y << endl;
-			//
-			//				}
 
 			cout << "Number of patterns " << all_points.size() << endl;
 		}	else {
@@ -274,24 +242,19 @@ bool CaliObjectOpenCV2::AccumulateCornersFlexibleExternal(bool draw_corners){
 	boardsize.width = chess_w;
 	//bool
 
-	//	string text_name;
-	//	ofstream out;
-	//	text_name = dir + "/data" + ToString<int>(camera_number) + ".txt";
-	//	out.open(text_name.c_str());
-
-
-	//for (int i = 0; i < int(images_to_process.size()); i++){
 	number_internal_images_written = 0;
 	cout << "Doing internal images now .... " << endl;
 	for (int i = 0; i <  int(internal_images.size()); i++){
 		cout << "Looking for corners " << i << endl;
-		//for (int i = 0; i < int(images_to_process.size()); i++){
 		// find corners
 
 		im = internal_images[i];
 		cv::cvtColor(im, gimage, CV_BGR2GRAY);
 
-		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		// < OpenCV 3.4
+		//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		// OpenCV version differences
+		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK + CALIB_CB_FILTER_QUADS);
 
 		if (corner_found) {
 
@@ -310,7 +273,6 @@ bool CaliObjectOpenCV2::AccumulateCornersFlexibleExternal(bool draw_corners){
 				for (int k=0; k<corner_count; k++) {
 
 					flipped_points[k] = pointBuf[chess_w*chess_h - 1 - k];
-
 				}
 
 				pointBuf.swap(flipped_points);
@@ -337,21 +299,18 @@ bool CaliObjectOpenCV2::AccumulateCornersFlexibleExternal(bool draw_corners){
 		}
 	}
 
-
-
 	cout << "Doing external images now .... " << endl;
-	//for (int i = 0; i < 8; i++){
 	for (int i = 0; i <  int(external_images.size()); i++){
 		cout << "Looking for corners " << i << endl;
-		//for (int i = 0; i < int(images_to_process.size()); i++){
+
 		// find corners
 
 		im = external_images[i];
 		cv::cvtColor(im, gimage, CV_BGR2GRAY);
 
-		//cv::imwrite("gray.png", gimage);
-
-		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE | CV_CALIB_CB_FILTER_QUADS);
+		// OpenCV version differences
+		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK + CALIB_CB_FILTER_QUADS);
 
 		if (!corner_found){
 			cout << "Trying default option " << endl;
@@ -360,25 +319,25 @@ bool CaliObjectOpenCV2::AccumulateCornersFlexibleExternal(bool draw_corners){
 
 		if (!corner_found){
 			cout << "Trying  option one" << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_NORMALIZE_IMAGE);
+			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_NORMALIZE_IMAGE);
+			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_NORMALIZE_IMAGE);
 		}
 
 		if (!corner_found){
 			cout << "Trying  option two" << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_FILTER_QUADS);
+			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_FILTER_QUADS);
+			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_FILTER_QUADS);
 		}
 
 		if (!corner_found){
 			cout << "Trying  option three" << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH);
+			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH);
+			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH);
 		}
 
 		if (corner_found) {
 
 			// need to flip the orientation, possibly ...
-
-			//corners[chess_w*chess_h];
-
 			first_point = pointBuf[0];
 			last_point = pointBuf[chess_w*chess_h - 1];
 
@@ -409,18 +368,11 @@ bool CaliObjectOpenCV2::AccumulateCornersFlexibleExternal(bool draw_corners){
 			}
 
 			all_points.push_back(pointBuf);
-			//				for (int k=0; k<corner_count; k++) {
-			//					//all_corners.push_back(corners[k]);
-			//
-			//					//out << corners[k].x << ", " << corners[k].y << endl;
-			//
-			//				}
+
 
 			cout << "Number of patterns " << all_points.size() << endl;
 		}	else {
 			all_points.push_back(vector<cv::Point2f>());
-			//cout << "WARNING -- EXTERNAL NOT FOUND! " << endl;
-			//exit(1);
 		}
 	}
 
@@ -445,593 +397,6 @@ struct CameraCaliData{
 	vector<vector<double> > ps;
 	vector<double>  vals;
 };
-
-//void residual_camera_no_distortion(double *p, double *x, int m, int n, void *data){
-//
-//
-//	CameraCaliData *dptr;
-//	dptr=(CameraCaliData*)data;
-//
-//	double k0 = p[0];
-//	double k1 = p[1];
-//	double k2 = p[2];
-//	double k3 = p[3];
-//	double k4 = p[4];
-//
-//	int index = 0;
-//	for (int cam = 0; cam < int(dptr->image_Points->size()); cam++){
-//		double thetax = p[5 + cam*6];
-//		double thetay = p[6 + cam*6];
-//		double thetaz = p[7 + cam*6];
-//		double t0 = p[8 + cam*6];
-//		double t1 = p[9 + cam*6];
-//		double t2 = p[10 + cam*6];
-//
-//		for (int i = 0; i < int(dptr->image_Points->at(cam).size()); i++){
-//
-//			double xim = dptr->image_Points->at(cam)[i].x;
-//			double yim = dptr->image_Points->at(cam)[i].y;
-//			double W0 = dptr->world_Points->at(cam)[i].x;
-//			double W1 = dptr->world_Points->at(cam)[i].y;
-//			double W2 = dptr->world_Points->at(cam)[i].z;
-//
-//			x[index] = ((k0*sin(thetay)-k1*sin(thetax)*cos(thetay)+k2*cos(thetax)*cos(thetay))*W2
-//					+(k1*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//							+k2*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))
-//							-k0*cos(thetay)*sin(thetaz))
-//							*W1
-//							+(k2*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//									+k1*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz))
-//									+k0*cos(thetay)*cos(thetaz))
-//									*W0+k2*t2+k1*t1+k0*t0)
-//									/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//											+sin(thetax)*cos(thetaz))
-//											*W1
-//											+(sin(thetax)*sin(thetaz)
-//													-cos(thetax)*sin(thetay)*cos(thetaz))
-//													*W0+t2)
-//													-xim;
-//			index++;
-//
-//			x[index] = ((k4*cos(thetax)*cos(thetay)-k3*sin(thetax)*cos(thetay))*W2
-//					+(k3*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//							+k4*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz)))
-//							*W1
-//							+(k4*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//									+k3*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//									*W0+k4*t2+k3*t1)
-//									/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//											+sin(thetax)*cos(thetaz))
-//											*W1
-//											+(sin(thetax)*sin(thetaz)
-//													-cos(thetax)*sin(thetay)*cos(thetaz))
-//													*W0+t2)
-//													-yim;
-//			index++;
-//
-//		}
-//	}
-//
-//	double val = 0;
-//
-//	for (int i = 0; i < n; i++){
-//		val += x[index]*x[index];
-//	}
-//
-//	cout << "val! " << val << endl;
-//	dptr->vals.push_back(val);
-//
-//	vector<double> params;
-//	for (int i = 0; i < m; i++){
-//		params.push_back(p[i]);
-//	}
-//
-//	dptr->ps.push_back(params);
-//}
-//
-//
-//void jacobian_camera_no_distortion(double *p, double *jac, int m, int n, void *data){
-//
-//
-//	CameraCaliData *dptr;
-//	dptr=(CameraCaliData*)data;
-//
-//	double k0 = p[0];
-//	double k1 = p[1];
-//	double k2 = p[2];
-//	double k3 = p[3];
-//	double k4 = p[4];
-//
-//	int number_cams = int(dptr->image_Points->size());
-//	int index = 0;
-//	for (int cam = 0; cam < int(dptr->image_Points->size()); cam++){
-//		double thetax = p[5 + cam*6];
-//		double thetay = p[6 + cam*6];
-//		double thetaz = p[7 + cam*6];
-//		double t0 = p[8 + cam*6];
-//		double t1 = p[9 + cam*6];
-//		double t2 = p[10 + cam*6];
-//
-//		for (int i = 0; i < int(dptr->image_Points->at(cam).size()); i++){
-//
-//			double xim = dptr->image_Points->at(cam)[i].x;
-//			double yim = dptr->image_Points->at(cam)[i].y;
-//			double W0 = dptr->world_Points->at(cam)[i].x;
-//			double W1 = dptr->world_Points->at(cam)[i].y;
-//			double W2 = dptr->world_Points->at(cam)[i].z;
-//
-//			// do the ks first ....
-//			jac[index] = (sin(thetay)*W2-cos(thetay)*sin(thetaz)*W1+cos(thetay)*cos(thetaz)*W0
-//					+t0)
-//					/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//							+sin(thetax)*cos(thetaz))
-//							*W1
-//							+(sin(thetax)*sin(thetaz)
-//									-cos(thetax)*sin(thetay)*cos(thetaz))
-//									*W0+t2);
-//			jac[index + 1] =      (-sin(thetax)*cos(thetay)*W2+(cos(thetax)*cos(thetaz)
-//					-sin(thetax)*sin(thetay)*sin(thetaz))
-//					*W1
-//					+(cos(thetax)*sin(thetaz)
-//							+sin(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t1)
-//							/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//									+sin(thetax)*cos(thetaz))
-//									*W1
-//									+(sin(thetax)*sin(thetaz)
-//											-cos(thetax)*sin(thetay)*cos(thetaz))
-//											*W0+t2);
-//
-//			jac[index + 2] = 1;
-//			jac[index + 3] = 0;
-//			jac[index + 4] = 0;
-//
-//			index = index + 5;
-//
-//			for (int j = 0; j < cam*6; j++){
-//				jac[index] = 0;
-//				index++;
-//			}
-//			// now for each camera ....
-//			jac[index + 0] =   ((-k2*sin(thetax)*cos(thetay)-k1*cos(thetax)*cos(thetay))*W2
-//					+(k2*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//							+k1*(-cos(thetax)*sin(thetay)*sin(thetaz)-sin(thetax)*cos(thetaz)))
-//							*W1
-//							+(k1*(cos(thetax)*sin(thetay)*cos(thetaz)-sin(thetax)*sin(thetaz))
-//									+k2*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//									*W0)
-//									/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//											+sin(thetax)*cos(thetaz))
-//											*W1
-//											+(sin(thetax)*sin(thetaz)
-//													-cos(thetax)*sin(thetay)*cos(thetaz))
-//													*W0+t2)
-//													-(-sin(thetax)*cos(thetay)*W2+(cos(thetax)*cos(thetaz)
-//															-sin(thetax)*sin(thetay)*sin(thetaz))
-//															*W1
-//															+(cos(thetax)*sin(thetaz)
-//																	+sin(thetax)*sin(thetay)*cos(thetaz))
-//																	*W0)
-//																	*((k0*sin(thetay)-k1*sin(thetax)*cos(thetay)
-//																			+k2*cos(thetax)*cos(thetay))
-//																			*W2
-//																			+(k1*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//																					+k2*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))
-//																					-k0*cos(thetay)*sin(thetaz))
-//																					*W1
-//																					+(k2*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//																							+k1*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz))
-//																							+k0*cos(thetay)*cos(thetaz))
-//																							*W0+k2*t2+k1*t1+k0*t0)
-//																							/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//																									+sin(thetax)*cos(thetaz))
-//																									*W1
-//																									+(sin(thetax)*sin(thetaz)
-//																											-cos(thetax)*sin(thetay)*cos(thetaz))
-//																											*W0+t2), 2);
-//			jac[index + 1] =  ((k1*sin(thetax)*sin(thetay)-k2*cos(thetax)*sin(thetay)
-//					+k0*cos(thetay))
-//					*W2
-//					+(k0*sin(thetay)*sin(thetaz)-k1*sin(thetax)*cos(thetay)*sin(thetaz)
-//							+k2*cos(thetax)*cos(thetay)*sin(thetaz))
-//							*W1
-//							+(-k0*sin(thetay)*cos(thetaz)+k1*sin(thetax)*cos(thetay)*cos(thetaz)
-//									-k2*cos(thetax)*cos(thetay)*cos(thetaz))
-//									*W0)
-//									/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//											+sin(thetax)*cos(thetaz))
-//											*W1
-//											+(sin(thetax)*sin(thetaz)
-//													-cos(thetax)*sin(thetay)*cos(thetaz))
-//													*W0+t2)
-//													-(-cos(thetax)*sin(thetay)*W2+cos(thetax)*cos(thetay)*sin(thetaz)*W1
-//															-cos(thetax)*cos(thetay)*cos(thetaz)*W0)
-//															*((k0*sin(thetay)-k1*sin(thetax)*cos(thetay)
-//																	+k2*cos(thetax)*cos(thetay))
-//																	*W2
-//																	+(k1*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//																			+k2*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))
-//																			-k0*cos(thetay)*sin(thetaz))
-//																			*W1
-//																			+(k2*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//																					+k1*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz))
-//																					+k0*cos(thetay)*cos(thetaz))
-//																					*W0+k2*t2+k1*t1+k0*t0)
-//																					/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//																							+sin(thetax)*cos(thetaz))
-//																							*W1
-//																							+(sin(thetax)*sin(thetaz)
-//																									-cos(thetax)*sin(thetay)*cos(thetaz))
-//																									*W0+t2), 2);
-//
-//			jac[index + 2] =  ((k2*(cos(thetax)*sin(thetay)*cos(thetaz)-sin(thetax)*sin(thetaz))
-//					+k1*(-cos(thetax)*sin(thetaz)-sin(thetax)*sin(thetay)*cos(thetaz))
-//					-k0*cos(thetay)*cos(thetaz))
-//					*W1
-//					+(k1*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//							+k2*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))
-//							-k0*cos(thetay)*sin(thetaz))
-//							*W0)
-//							/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//									+sin(thetax)*cos(thetaz))
-//									*W1
-//									+(sin(thetax)*sin(thetaz)
-//											-cos(thetax)*sin(thetay)*cos(thetaz))
-//											*W0+t2)
-//											-((cos(thetax)*sin(thetay)*cos(thetaz)-sin(thetax)*sin(thetaz))*W1
-//													+(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))*W0)
-//													*((k0*sin(thetay)-k1*sin(thetax)*cos(thetay)
-//															+k2*cos(thetax)*cos(thetay))
-//															*W2
-//															+(k1*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//																	+k2*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))
-//																	-k0*cos(thetay)*sin(thetaz))
-//																	*W1
-//																	+(k2*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//																			+k1*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz))
-//																			+k0*cos(thetay)*cos(thetaz))
-//																			*W0+k2*t2+k1*t1+k0*t0)
-//																			/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//																					+sin(thetax)*cos(thetaz))
-//																					*W1
-//																					+(sin(thetax)*sin(thetaz)
-//																							-cos(thetax)*sin(thetay)*cos(thetaz))
-//																							*W0+t2), 2);
-//
-//			jac[index + 3] =  k0/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//					+sin(thetax)*cos(thetaz))
-//					*W1
-//					+(sin(thetax)*sin(thetaz)
-//							-cos(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t2);
-//
-//			jac[index + 4] =  k1/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//					+sin(thetax)*cos(thetaz))
-//					*W1
-//					+(sin(thetax)*sin(thetaz)
-//							-cos(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t2);
-//
-//			jac[index + 5] =  k2/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//					+sin(thetax)*cos(thetaz))
-//					*W1
-//					+(sin(thetax)*sin(thetaz)
-//							-cos(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t2)
-//							-((k0*sin(thetay)-k1*sin(thetax)*cos(thetay)
-//									+k2*cos(thetax)*cos(thetay))
-//									*W2
-//									+(k1*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//											+k2*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))
-//											-k0*cos(thetay)*sin(thetaz))
-//											*W1
-//											+(k2*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//													+k1*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz))
-//													+k0*cos(thetay)*cos(thetaz))
-//													*W0+k2*t2+k1*t1+k0*t0)
-//													/((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//															+sin(thetax)*cos(thetaz))
-//															*W1
-//															+(sin(thetax)*sin(thetaz)
-//																	-cos(thetax)*sin(thetay)*cos(thetaz))
-//																	*W0+t2), 2);
-//			index = index + 6;
-//
-//			for (int j = (cam+ 1)*6; j < number_cams*6; j++){
-//				jac[index] = 0;
-//				index++;
-//			}
-//
-//
-//
-//			////////////////////// now for r_y .......
-//			// do the ks first ....
-//			jac[index] = 0;
-//			jac[index + 1]  = 0;
-//			jac[index + 2] = 0;
-//			jac[index + 3] = (-sin(thetax)*cos(thetay)*W2+(cos(thetax)*cos(thetaz)
-//					-sin(thetax)*sin(thetay)*sin(thetaz))
-//					*W1
-//					+(cos(thetax)*sin(thetaz)
-//							+sin(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t1)
-//							/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//									+sin(thetax)*cos(thetaz))
-//									*W1
-//									+(sin(thetax)*sin(thetaz)
-//											-cos(thetax)*sin(thetay)*cos(thetaz))
-//											*W0+t2);
-//			jac[index + 4] = 1;
-//
-//			index = index + 5;
-//
-//			for (int j = 0; j < cam*6; j++){
-//				jac[index] = 0;
-//				index++;
-//			}
-//			// now for each camera ....
-//			jac[index + 0] =        ((-k4*sin(thetax)*cos(thetay)-k3*cos(thetax)*cos(thetay))*W2
-//					+(k4*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//							+k3*(-cos(thetax)*sin(thetay)*sin(thetaz)-sin(thetax)*cos(thetaz)))
-//							*W1
-//							+(k3*(cos(thetax)*sin(thetay)*cos(thetaz)-sin(thetax)*sin(thetaz))
-//									+k4*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//									*W0)
-//									/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//											+sin(thetax)*cos(thetaz))
-//											*W1
-//											+(sin(thetax)*sin(thetaz)
-//													-cos(thetax)*sin(thetay)*cos(thetaz))
-//													*W0+t2)
-//													-(-sin(thetax)*cos(thetay)*W2+(cos(thetax)*cos(thetaz)
-//															-sin(thetax)*sin(thetay)*sin(thetaz))
-//															*W1
-//															+(cos(thetax)*sin(thetaz)
-//																	+sin(thetax)*sin(thetay)*cos(thetaz))
-//																	*W0)
-//																	*((k4*cos(thetax)*cos(thetay)-k3*sin(thetax)*cos(thetay))*W2
-//																			+(k3*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//																					+k4*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz)))
-//																					*W1
-//																					+(k4*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//																							+k3*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//																							*W0+k4*t2+k3*t1)
-//																							/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//																									+sin(thetax)*cos(thetaz))
-//																									*W1
-//																									+(sin(thetax)*sin(thetaz)
-//																											-cos(thetax)*sin(thetay)*cos(thetaz))
-//																											*W0+t2), 2);
-//			jac[index + 1]  =  ((k3*sin(thetax)*sin(thetay)-k4*cos(thetax)*sin(thetay))*W2
-//					+(k4*cos(thetax)*cos(thetay)*sin(thetaz)
-//							-k3*sin(thetax)*cos(thetay)*sin(thetaz))
-//							*W1
-//							+(k3*sin(thetax)*cos(thetay)*cos(thetaz)
-//									-k4*cos(thetax)*cos(thetay)*cos(thetaz))
-//									*W0)
-//									/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//											+sin(thetax)*cos(thetaz))
-//											*W1
-//											+(sin(thetax)*sin(thetaz)
-//													-cos(thetax)*sin(thetay)*cos(thetaz))
-//													*W0+t2)
-//													-((k4*cos(thetax)*cos(thetay)-k3*sin(thetax)*cos(thetay))*W2
-//															+(k3*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//																	+k4*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz)))
-//																	*W1
-//																	+(k4*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//																			+k3*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//																			*W0+k4*t2+k3*t1)
-//																			*(-cos(thetax)*sin(thetay)*W2+cos(thetax)*cos(thetay)*sin(thetaz)*W1
-//																					-cos(thetax)*cos(thetay)*cos(thetaz)
-//																					*W0)
-//																					/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//																							+sin(thetax)*cos(thetaz))
-//																							*W1
-//																							+(sin(thetax)*sin(thetaz)
-//																									-cos(thetax)*sin(thetay)*cos(thetaz))
-//																									*W0+t2), 2);
-//
-//			jac[index + 2] =  ((k4*(cos(thetax)*sin(thetay)*cos(thetaz)-sin(thetax)*sin(thetaz))
-//					+k3*(-cos(thetax)*sin(thetaz)-sin(thetax)*sin(thetay)*cos(thetaz)))
-//					*W1
-//					+(k3*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//							+k4*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz)))
-//							*W0)
-//							/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//									+sin(thetax)*cos(thetaz))
-//									*W1
-//									+(sin(thetax)*sin(thetaz)
-//											-cos(thetax)*sin(thetay)*cos(thetaz))
-//											*W0+t2)
-//											-((cos(thetax)*sin(thetay)*cos(thetaz)-sin(thetax)*sin(thetaz))*W1
-//													+(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz))*W0)
-//													*((k4*cos(thetax)*cos(thetay)-k3*sin(thetax)*cos(thetay))*W2
-//															+(k3*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//																	+k4*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz)))
-//																	*W1
-//																	+(k4*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//																			+k3*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//																			*W0+k4*t2+k3*t1)
-//																			/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//																					+sin(thetax)*cos(thetaz))
-//																					*W1
-//																					+(sin(thetax)*sin(thetaz)
-//																							-cos(thetax)*sin(thetay)*cos(thetaz))
-//																							*W0+t2), 2);
-//
-//
-//
-//			jac[index + 3] = 0;
-//
-//			jac[index + 4] =  k3/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//					+sin(thetax)*cos(thetaz))
-//					*W1
-//					+(sin(thetax)*sin(thetaz)
-//							-cos(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t2);
-//			jac[index + 5] =  k4/(cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//					+sin(thetax)*cos(thetaz))
-//					*W1
-//					+(sin(thetax)*sin(thetaz)
-//							-cos(thetax)*sin(thetay)*cos(thetaz))
-//							*W0+t2)
-//							-((k4*cos(thetax)*cos(thetay)-k3*sin(thetax)*cos(thetay))*W2
-//									+(k3*(cos(thetax)*cos(thetaz)-sin(thetax)*sin(thetay)*sin(thetaz))
-//											+k4*(cos(thetax)*sin(thetay)*sin(thetaz)+sin(thetax)*cos(thetaz)))
-//											*W1
-//											+(k4*(sin(thetax)*sin(thetaz)-cos(thetax)*sin(thetay)*cos(thetaz))
-//													+k3*(cos(thetax)*sin(thetaz)+sin(thetax)*sin(thetay)*cos(thetaz)))
-//													*W0+k4*t2+k3*t1)
-//													/pow((cos(thetax)*cos(thetay)*W2+(cos(thetax)*sin(thetay)*sin(thetaz)
-//															+sin(thetax)*cos(thetaz))
-//															*W1
-//															+(sin(thetax)*sin(thetaz)
-//																	-cos(thetax)*sin(thetay)*cos(thetaz))
-//																	*W0+t2), 2);
-//
-//			index = index + 6;
-//
-//			for (int j = (cam+ 1)*6; j < number_cams*6; j++){
-//				jac[index] = 0;
-//				index++;
-//			}
-//
-//
-//		}
-//	}
-//}
-//
-//
-//void CaliObjectOpenCV2::LevMarCameraCaliNoDistortion(vector< vector<cv::Point2f> >& imagep, vector< vector<cv::Point3f> >& worldp,
-//		std::ofstream& out){
-//
-//	// Here, we let X by X inverse ... so we need to reprocess before leaving ....
-//	char ch;
-//
-//	CameraCaliData C;
-//	C.image_Points = &imagep;
-//	C.world_Points = &worldp;
-//
-//	int number_cameras = worldp.size();
-//	cout << "number camera " << number_cameras << endl;
-//	cin >> ch;
-//	// each image has world_points.size() items ....
-//	int n = C.world_Points->size()* C.world_Points->at(0).size();
-//	int m = 5 + 6*number_cameras;   // 5 camera params, then 6 compoenents for each image
-//
-//	double x[n];
-//
-//	//double jac[n*m];
-//
-//	double opts[LM_OPTS_SZ], info[LM_INFO_SZ];
-//
-//	opts[0]=LM_INIT_MU; opts[1]=1E-15; opts[2]=1E-15; opts[3]=1E-20;
-//	opts[4]= LM_DIFF_DELTA; // relevant only if the Jacobian is approximated using finite differences; specifies forward differencing
-//
-//	// fill in using CO and undistort ....
-//	int counter = 0;
-//
-//
-//	for (int i = 0; i < n; i++){
-//		x[i] = 0;
-//	}
-//
-//
-//	// convert X, Z, into parameter vector -- LATER
-//
-//	double parameter_vector[n];
-//	for (int i = 0; i < m; i++){
-//		parameter_vector[i] = 0;
-//	}
-//
-//	parameter_vector[0] = 2500;
-//	parameter_vector[2] = image_size.width/2.0;
-//	parameter_vector[3] = 2500;
-//	parameter_vector[4] = image_size.height/2.0;
-//
-//
-//
-//	out << endl;
-//	out << "Intial solution ";
-//	for(int i=0; i<m; ++i){
-//		out <<	parameter_vector[i] << " ";
-//	}
-//	out << endl << endl;
-//
-//	//int ret;
-//	int ret = dlevmar_der(residual_camera_no_distortion, jacobian_camera_no_distortion, parameter_vector, x, m, n, 1000, opts, info, NULL, NULL, &C); // with analytic Jacobian
-//	//int ret;
-//
-//
-//	//printf("Results for %s:\n", probname[problem]);
-//	printf("Levenberg-Marquardt returned %d in %g iter, reason %g\nSolution: ", ret, info[5], info[6]);
-//	for(int i=0; i<m; ++i)
-//		printf("%.7g ", parameter_vector[i]);
-//	printf("\n\nMinimization info:\n");
-//	for(int i=0; i<LM_INFO_SZ; ++i)
-//		printf("%g ", info[i]);
-//	printf("\n");
-//
-//	out << "Levenberg-Marquardt returned " << ret << " in " << info[5] << " iter, reason " << info[6] << endl;
-//	out << " Solution ";
-//	for(int i=0; i<m; ++i){
-//		out <<	parameter_vector[i] << " ";
-//	}
-//	out << endl << endl;
-//
-//	out << "minimization information " << endl;
-//	for(int i=0; i<LM_INFO_SZ; ++i){
-//		out << info[i] << " ";
-//	}
-//	out << endl << endl;
-//
-//	//R = Rx*Ry*Rz;
-//	// X params first, then Y params.
-////	Matrix Rx(3, 3);
-////	Matrix Ry(3, 3);
-////	Matrix Rz(3, 3);
-////
-////
-////	Rx.Row(1) << 1 <<  0 << 0;
-////	Rx.Row(2) << 0 << cos(parameter_vector[0]) << -sin(parameter_vector[0]);
-////	Rx.Row(3) << 0 << sin(parameter_vector[0]) << cos(parameter_vector[0]);
-////
-////	Ry.Row(1) << cos(parameter_vector[1]) << 0 << sin(parameter_vector[1]);
-////	Ry.Row(2) << 0 << 1 << 0;
-////	Ry.Row(3) << -sin(parameter_vector[1]) << 0 << cos(parameter_vector[1]);
-////
-////	Rz.Row(1) << cos(parameter_vector[2]) << -sin(parameter_vector[2]) << 0;
-////	Rz.Row(2) << sin(parameter_vector[2]) << cos(parameter_vector[2]) << 0;
-////	Rz.Row(3) << 0 << 0 << 1;
-////
-////
-////	X.SubMatrix(1, 3, 1, 3) = Rx*Ry*Rz;
-////	X(1, 4) = parameter_vector[3];
-////	X(2, 4) = parameter_vector[4];
-////	X(3, 4) = parameter_vector[5];
-////
-////	Rx.Row(1) << 1 <<  0 << 0;
-////	Rx.Row(2) << 0 << cos(parameter_vector[6]) << -sin(parameter_vector[6]);
-////	Rx.Row(3) << 0 << sin(parameter_vector[6]) << cos(parameter_vector[6]);
-////
-////	Ry.Row(1) << cos(parameter_vector[7]) << 0 << sin(parameter_vector[7]);
-////	Ry.Row(2) << 0 << 1 << 0;
-////	Ry.Row(3) << -sin(parameter_vector[7]) << 0 << cos(parameter_vector[7]);
-////
-////	Rz.Row(1) << cos(parameter_vector[8]) << -sin(parameter_vector[8]) << 0;
-////	Rz.Row(2) << sin(parameter_vector[8]) << cos(parameter_vector[8]) << 0;
-////	Rz.Row(3) << 0 << 0 << 1;
-////
-////
-////	Z.SubMatrix(1, 3, 1, 3) = Rx*Ry*Rz;
-////	Z(1, 4) = parameter_vector[9];
-////	Z(2, 4) = parameter_vector[10];
-////	Z(3, 4) = parameter_vector[11];
-//
-//
-//
-//}
 
 
 void CaliObjectOpenCV2::Calibrate(std::ofstream& out, string write_directory){
@@ -1098,8 +463,12 @@ void CaliObjectOpenCV2::Calibrate(std::ofstream& out, string write_directory){
 	double rms = 0;
 
 	if (text_file.size() == 0){
+		//rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
+		//		CV_CALIB_RATIONAL_MODEL);
+		// OpenCV versions
 		rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-				CV_CALIB_RATIONAL_MODEL);
+						CALIB_RATIONAL_MODEL);
+
 
 	}	else {
 		ifstream in(text_file.c_str());
@@ -1356,13 +725,13 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 		//rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
 		//		CV_CALIB_RATIONAL_MODEL| CV_CALIB_USE_INTRINSIC_GUESS);
 
+	//	rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
+	//					CV_CALIB_USE_INTRINSIC_GUESS);
+		// OpenCV versions
 		rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-						CV_CALIB_USE_INTRINSIC_GUESS);
+								CALIB_USE_INTRINSIC_GUESS);
 	}
 
-
-
-	//double rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs, CV_CALIB_USE_INTRINSIC_GUESS);
 
 	cout << "rms " << rms << endl;
 	cout << "camera matrix " << endl;
@@ -1433,7 +802,7 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 
 	out << endl << "Summed reproj error " << reproj_error << endl << endl;
 
-	Matrix temp;
+	//Matrix temp;
 	for (int m = number_internal_images_written; m < int(all_points.size()); m++){
 		Rts.push_back(vector<vector <double> >());
 	}

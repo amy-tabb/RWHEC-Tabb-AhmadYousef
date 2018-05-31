@@ -3,6 +3,8 @@
  *
  *  Created on: Nov 18, 2015
  *      Author: atabb
+ *      Updated on May25, 2018 to use Eigen instead of newmat by atabb
+ *      Also resolved ambiguity between Eigen's enum quaterion type and this project's
  */
 
 #ifndef COSTFUNCTIONS_HPP_
@@ -15,6 +17,11 @@
 #include "Calibration2.hpp"
 #include <iostream>
 
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+
+using namespace Eigen;
+
 using ceres::AutoDiffCostFunction;
 using ceres::CostFunction;
 using ceres::Problem;
@@ -23,8 +30,9 @@ using ceres::Solve;
 
 using namespace std;
 
-enum PARAM_TYPE {Euler, AxisAngle, Quaternion };
-enum COST_TYPE {c1, c2, rp1, rp2, dh1, dh2, z, li_dq, li_kp, hirsh, shah};
+enum PARAM_TYPE {Euler, AxisAngle, Cali_Quaternion };
+//enum COST_TYPE {c1, c2, rp1, rp2, dh1, dh2, z, li_dq, li_kp, hirsh, shah};
+enum COST_TYPE {c1, c2, rp1, rp2};
 enum SEPARABLE_TYPE {rotation_only, translation_only, simultaneous};
 
 template <typename T>
@@ -218,7 +226,7 @@ struct CF1_2 {
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(X, XM);
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(Z, ZM);
 		}	break;
-		case Quaternion: {
+		case Cali_Quaternion: {
 			Convert7ParameterQuaternionRepresentationIntoMatrix(X, XM);
 			Convert7ParameterQuaternionRepresentationIntoMatrix(Z, ZM);
 		}	break;
@@ -319,7 +327,7 @@ struct CF1_2_multi {
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(X, XM);
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(Z, ZM);
 		}	break;
-		case Quaternion: {
+		case Cali_Quaternion: {
 			Convert7ParameterQuaternionRepresentationIntoMatrix(X, XM);
 			Convert7ParameterQuaternionRepresentationIntoMatrix(Z, ZM);
 		}	break;
@@ -435,7 +443,7 @@ struct CF1_2_multi_extended {
 			}
 		}; break;
 		case translation_only: {
-			if (param_type == Quaternion){
+			if (param_type == Cali_Quaternion){
 				for (int i = 0; i < 7; i++){
 					if (i < 4){
 						Z[i] = T(param_copy[(this_camera + 1)*7 + i]);
@@ -484,7 +492,7 @@ struct CF1_2_multi_extended {
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(X, XM);
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(Z, ZM);
 		}	break;
-		case Quaternion: {
+		case Cali_Quaternion: {
 			Convert7ParameterQuaternionRepresentationIntoMatrix(X, XM);
 			Convert7ParameterQuaternionRepresentationIntoMatrix(Z, ZM);
 		}	break;
@@ -615,202 +623,6 @@ struct CF1_2_multi_extended {
 	double* weighting;
 };
 
-
-// create is for one point only ....
-//struct RP1_2_multi {
-//	RP1_2_multi(double* camera_parameters, double* B, double* twoDpoints, double* threeDpoints, PARAM_TYPE param_type, COST_TYPE cost_type, int number_points,
-//			int number_cameras, int this_camera, double* weighting):
-//				camera_parameters(camera_parameters), B(B), twoDpoints(twoDpoints), threeDpoints(threeDpoints),
-//				param_type(param_type), cost_type(cost_type), number_points(number_points),
-//				number_cameras(number_cameras), this_camera(this_camera), weighting(weighting){
-//	}
-//
-//	template <typename T>
-//	//	bool operator()(const T* const X,
-//	//			const T* const Z,
-//	//			T* residuals) const {
-//	bool operator()(T const* const* parameters,
-//			T* residuals) const {
-//		// X and Z are 7 parameters each, and our unknowns
-//		// need to represent these each as matrices
-//		// parameters: X0 (7) cam_parameters(12) X1(7) cam_parameters(12) Z(7)
-//
-//		//The {pitch,roll,yaw} Euler angles are rotations around the {x,y,z} axes, respectively.
-//		//They are applied in that same order, so the total rotation R is Rz * Ry * Rx.
-//		char ch;
-//		//cout << "Line 767 " << endl; //cin >> ch;
-//		T XM[16];
-//		T ZM[16];
-//
-//		T X[7];
-//		T Z[7];
-//
-//		T w = T(sqrt(*weighting));
-//		//cout << "Parameters for " << this_camera << endl;
-//
-//		for (int i = 0; i < 7; i++){
-//			Z[i] = T(*parameters[number_cameras*19 + i]);
-//			X[i] = T(*parameters[this_camera*19 + i]);
-//		}
-//
-//		switch (param_type){
-//		case Euler: {
-//			Convert6ParameterEulerAngleRepresentationIntoMatrix(X, XM);
-//			Convert6ParameterEulerAngleRepresentationIntoMatrix(Z, ZM);
-//		}	break;
-//		case AxisAngle: {
-//			Convert6ParameterAxisAngleRepresentationIntoMatrix(X, XM);
-//			Convert6ParameterAxisAngleRepresentationIntoMatrix(Z, ZM);
-//		}	break;
-//		case Quaternion: {
-//			Convert7ParameterQuaternionRepresentationIntoMatrix(X, XM);
-//			Convert7ParameterQuaternionRepresentationIntoMatrix(Z, ZM);
-//		}	break;
-//		}
-//
-//		T term0[16];
-//
-//
-//		// ||AX-ZB||
-//		// have to convert to T
-//		T A_hat_T[16];
-//		T BT[16];
-//		T M[16];
-//		T K[9];
-//		T k1, k2, p1, p2, k3, k4, k5, k6;
-//		T r_sqr;
-//
-//		//cout << "Line 807 " << endl;
-//		//cin >> ch;
-//
-//		T Xp[4];
-//		T xp[3];
-//		T xpp[3];
-//
-//		for (int i = 0; i < 16; i++){
-//
-//			BT[i] = T(B[i]);
-//		}
-//
-//		for (int i = 0; i < 9; i++){
-//			K[i] = T(0);
-//		}
-//
-//		K[8] = T(1);
-//
-//		// set up A_hat
-//		MatrixMultiply(ZM, BT, term0, 4);
-//		MatrixMultiply(term0, XM, A_hat_T, 4);
-//
-//
-//		// copy over parameters
-//		switch (cost_type){
-//		case rp1: {
-//			// don't use the parameter version for camera cali -- this amtrix is sent all set up for use ....
-//			K[0] = T(camera_parameters[0]);
-//			K[2] = T(camera_parameters[1]);
-//			K[4] = T(camera_parameters[2]);
-//			K[5] = T(camera_parameters[3]);
-//			k1 = T(camera_parameters[4]);
-//			k2 = T(camera_parameters[5]);
-//			p1 = T(camera_parameters[6]);
-//			p2 = T(camera_parameters[7]);
-//			k3 = T(camera_parameters[8]);
-//			k4 = T(camera_parameters[9]);
-//			k5 = T(camera_parameters[10]);
-//			k6 = T(camera_parameters[11]);
-//		} break;
-//		case rp2:{
-//			K[0] = *parameters[this_camera*19 + 7];
-//			K[2] = *parameters[this_camera*19 + 8];
-//			K[4] = *parameters[this_camera*19 + 9];
-//			K[5] = *parameters[this_camera*19 + 10];
-//			k1 = *parameters[this_camera*19 + 11];
-//			k2 = *parameters[this_camera*19 + 12];
-//			p1 = *parameters[this_camera*19 + 13];
-//			p2 = *parameters[this_camera*19 + 14];
-//			k3 = *parameters[this_camera*19 + 15];
-//			k4 = *parameters[this_camera*19 + 16];
-//			k5 = *parameters[this_camera*19 + 17];
-//			k6 = *parameters[this_camera*19 + 18];
-//		} break;
-//		default: {
-//
-//		}
-//
-//		}
-//
-//		for (int j = 0; j < 3; j++){
-//			Xp[j] = T(threeDpoints[j]);
-//		}
-//		Xp[3] = T(1);
-//
-//		MatrixMultiply(A_hat_T, Xp, xp, 3, 4, 4, 1);
-//
-//		xp[0] = xp[0]/xp[2];
-//		xp[1] = xp[1]/xp[2];
-//
-//		r_sqr= xp[0]*xp[0] + xp[1]*xp[1];
-//
-//		T numer = (T(1) + k1*r_sqr + k2*r_sqr*r_sqr + k3*r_sqr*r_sqr*r_sqr);
-//		T denom = (T(1) + k4*r_sqr + k5*r_sqr*r_sqr + k6*r_sqr*r_sqr*r_sqr);
-//
-//		xpp[0] = xp[0]*numer/denom + T(2)*p1*xp[0]*xp[1] + p2*(r_sqr + T(2)*xp[0]*xp[0]);
-//		xpp[1] = xp[1]*numer/denom + T(2)*p2*xp[0]*xp[1] + p1*(r_sqr + T(2)*xp[1]*xp[1]);
-//
-//		T predicted_x = (xpp[0]*K[0] + K[2]);
-//		T predicted_y = (xpp[1]*K[4] + K[5]);
-//
-//		// TODO out put values and see what is going on here ....
-////		cout << "XW" << endl;
-////		PrintMatrix(Xp, 4, 1);
-////
-////		cout << "xp" << endl;
-////		PrintMatrix(xp, 3, 1);
-////
-////		cout << "Predicted x " << predicted_x << endl;
-////		cout << "Predicted y " << predicted_y << endl;
-////
-////		cout << "Obs0 " << twoDpoints[0] << endl;
-////		cout << "Obs1 " << twoDpoints[1] << endl;
-//
-//		residuals[0] = w*(predicted_x - T(twoDpoints[0]));
-//		residuals[1] = w*(predicted_y - T(twoDpoints[1]));
-//
-//		//cin >> ch;
-//		return true;
-//	}
-//
-//	static ceres::CostFunction* Create(double* camera_parameters, double* B, double* twoDpoints, double* threeDpoints,
-//			PARAM_TYPE param_type, COST_TYPE cost_type, int number_points, int number_cameras, int this_camera, double* weighting) {
-//
-//
-//		ceres::DynamicAutoDiffCostFunction<RP1_2_multi, 10>* cost_function =
-//				new ceres::DynamicAutoDiffCostFunction<RP1_2_multi, 10>(
-//						new RP1_2_multi(camera_parameters, B, twoDpoints, threeDpoints, param_type, cost_type, number_points, number_cameras, this_camera, weighting));
-//
-//
-//		for (int i = 0; i <19*(number_cameras) + 7; i++){
-//			cost_function->AddParameterBlock(1);
-//		}
-//		cost_function->SetNumResiduals(2);
-//
-//		return cost_function;
-//	}
-//
-//	double* camera_parameters;
-//	double* B;
-//	double* twoDpoints;
-//	double* threeDpoints;
-//
-//	PARAM_TYPE param_type;
-//	COST_TYPE cost_type;
-//	int number_points;
-//	int number_cameras;
-//	int this_camera;
-//	double* weighting;
-//};
-
 struct RP1_2_multi {
 	RP1_2_multi(double* camera_parameters, double* B, double* twoDpoints, double* threeDpoints, PARAM_TYPE param_type, COST_TYPE cost_type, int number_points,
 			int number_cameras, int this_camera, double* weighting):
@@ -831,8 +643,8 @@ struct RP1_2_multi {
 
 		//The {pitch,roll,yaw} Euler angles are rotations around the {x,y,z} axes, respectively.
 		//They are applied in that same order, so the total rotation R is Rz * Ry * Rx.
-		char ch;
-		//cout << "Line 767 " << endl; //cin >> ch;
+		//char ch;
+
 		T XM[16];
 		T ZM[16];
 
@@ -840,18 +652,12 @@ struct RP1_2_multi {
 		T Z[7];
 
 		T w = T(sqrt(*weighting));
-		//cout << "Parameters for " << this_camera << endl;
 
-		//		for (int i = 0; i < 7; i++){
-		//			Z[i] = T(*parameters[number_cameras*19 + i]);
-		//			X[i] = T(*parameters[this_camera*19 + i]);
-		//		}
 
 		for (int i = 0; i < 7; i++){
 			X[i] = T(*parameters[0*7 + i]);
 			Z[i] = T(*parameters[7 + (this_camera)*19 + i]);
 
-			//cout << "X, Z: " << X[i] << ", " << Z[i] << endl;
 		}
 
 		switch (param_type){
@@ -863,7 +669,7 @@ struct RP1_2_multi {
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(X, XM);
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(Z, ZM);
 		}	break;
-		case Quaternion: {
+		case Cali_Quaternion: {
 			Convert7ParameterQuaternionRepresentationIntoMatrix(X, XM);
 			Convert7ParameterQuaternionRepresentationIntoMatrix(Z, ZM);
 		}	break;
@@ -876,13 +682,10 @@ struct RP1_2_multi {
 		// have to convert to T
 		T A_hat_T[16];
 		T BT[16];
-		T M[16];
+	//	T M[16];
 		T K[9];
 		T k1, k2, p1, p2, k3, k4, k5, k6;
 		T r_sqr;
-
-		//cout << "Line 807 " << endl;
-		//cin >> ch;
 
 		T Xp[4];
 		T xp[3];
@@ -962,23 +765,9 @@ struct RP1_2_multi {
 		T predicted_x = (xpp[0]*K[0] + K[2]);
 		T predicted_y = (xpp[1]*K[4] + K[5]);
 
-		// TODO out put values and see what is going on here ....
-		//		cout << "XW" << endl;
-		//		PrintMatrix(Xp, 4, 1);
-		//
-		//		cout << "xp" << endl;
-		//		PrintMatrix(xp, 3, 1);
-		//
-		//		cout << "Predicted x " << predicted_x << endl;
-		//		cout << "Predicted y " << predicted_y << endl;
-		//
-		//		cout << "Obs0 " << twoDpoints[0] << endl;
-		//		cout << "Obs1 " << twoDpoints[1] << endl;
-
 		residuals[0] = w*(predicted_x - T(twoDpoints[0]));
 		residuals[1] = w*(predicted_y - T(twoDpoints[1]));
 
-		//cin >> ch;
 		return true;
 	}
 
@@ -1034,7 +823,7 @@ struct RP1_2_multi_extended {
 
 		//The {pitch,roll,yaw} Euler angles are rotations around the {x,y,z} axes, respectively.
 		//They are applied in that same order, so the total rotation R is Rz * Ry * Rx.
-		char ch;
+		//char ch;
 		//cout << "Line 767 " << endl; //cin >> ch;
 		T XM[16];
 		T ZM[16];
@@ -1043,16 +832,10 @@ struct RP1_2_multi_extended {
 		T Z[7];
 
 		T w = T(sqrt(*weighting));
-		//cout << "Parameters for " << this_camera << endl;
-
-		//		for (int i = 0; i < 7; i++){
-		//			Z[i] = T(*parameters[number_cameras*19 + i]);
-		//			X[i] = T(*parameters[this_camera*19 + i]);
-		//		}
 
 		int break_point = 3;
 
-		if (param_type == Quaternion){
+		if (param_type == Cali_Quaternion){
 			break_point = 4;
 		}
 		switch (sep_type){
@@ -1096,7 +879,7 @@ struct RP1_2_multi_extended {
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(X, XM);
 			Convert6ParameterAxisAngleRepresentationIntoMatrix(Z, ZM);
 		}	break;
-		case Quaternion: {
+		case Cali_Quaternion: {
 			Convert7ParameterQuaternionRepresentationIntoMatrix(X, XM);
 			Convert7ParameterQuaternionRepresentationIntoMatrix(Z, ZM);
 		}	break;
@@ -1109,13 +892,10 @@ struct RP1_2_multi_extended {
 		// have to convert to T
 		T A_hat_T[16];
 		T BT[16];
-		T M[16];
+		//T M[16];
 		T K[9];
 		T k1, k2, p1, p2, k3, k4, k5, k6;
 		T r_sqr;
-
-		//cout << "Line 807 " << endl;
-		//cin >> ch;
 
 		T Xp[4];
 		T xp[3];
@@ -1195,19 +975,6 @@ struct RP1_2_multi_extended {
 		T predicted_x = (xpp[0]*K[0] + K[2]);
 		T predicted_y = (xpp[1]*K[4] + K[5]);
 
-		// TODO out put values and see what is going on here ....
-		//		cout << "XW" << endl;
-		//		PrintMatrix(Xp, 4, 1);
-		//
-		//		cout << "xp" << endl;
-		//		PrintMatrix(xp, 3, 1);
-		//
-		//		cout << "Predicted x " << predicted_x << endl;
-		//		cout << "Predicted y " << predicted_y << endl;
-		//
-		//		cout << "Obs0 " << twoDpoints[0] << endl;
-		//		cout << "Obs1 " << twoDpoints[1] << endl;
-
 		residuals[0] = w*(predicted_x - T(twoDpoints[0]));
 		residuals[1] = w*(predicted_y - T(twoDpoints[1]));
 
@@ -1247,17 +1014,6 @@ struct RP1_2_multi_extended {
 	double* weighting;
 };
 
-
-//// we need the camera parameters, transformation matrices (one per camera), and twoDpoints for each camera that can see the pattern.
-//	// for now, solve all together as one big cost function
-//	// result is the three d points for the pattern.
-//	double* camera_parameters;
-//	double* transformation_matrices;
-//	double* twoDpoints;
-//
-//	int number_points;
-//	int number_cameras;
-
 // this is all per camera, we don't need to send out all items at once ....
 struct ReconstructX {
 	ReconstructX(double* camera_parameters, double* transformation_matrix, double* twoDpoints, int number_points, bool individual, int this_point):
@@ -1273,11 +1029,10 @@ struct ReconstructX {
 			T* residuals) const {
 		// the parameters are the threed points now
 
-		char ch;
+
 		// have to convert to T
 		T A_hat_T[16];
-		//T BT[16];
-		T M[16];
+
 		T K[9];
 		T k1, k2, p1, p2, k3, k4, k5, k6;
 		T r_sqr;
@@ -1338,10 +1093,7 @@ struct ReconstructX {
 				//if (i < 1){
 				residuals[2*i] = (predicted_x - T(twoDpoints[2*i + 0]));
 				residuals[2*i + 1] = (predicted_y - T(twoDpoints[2*i + 1]));
-				//			}	else {
-				//				residuals[2*i] = T(0);
-				//				residuals[2*i + 1] = T(0);
-				//			}
+
 			}
 		}	else {
 			int i = this_point;
@@ -1371,7 +1123,7 @@ struct ReconstructX {
 			residuals[1] = (predicted_y - T(twoDpoints[2*i + 1]));
 		}
 
-		//cin >> ch;
+
 		return true;
 	}
 
@@ -1420,33 +1172,36 @@ struct ReconstructX {
 
 };
 
-void CF1_2_one_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void CF1_2_multi_camera_separable(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type);
 
-void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void CF1_2_one_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
+
+void CF1_2_multi_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
+
+void CF1_2_multi_camera_separable(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type);
+
+void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void RP1_2_multi_camera_sparse(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void RP1_2_multi_camera_sparse_seperable(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type);
 
 void CopyFromCalibration(vector<CaliObjectOpenCV2>& COs, double* camera_params);
 
 void CopyToCalibration(vector<CaliObjectOpenCV2>& COs, double* camera_parameters);
 
-void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Matrix& X, vector<Matrix>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
+void ReconstructXFunction(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, Matrix4d& X, vector<Matrix4d>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
 		std::ofstream& out);
 
 double ComputeSummedSquaredDistanceBetweenSets(double* set0, double* set1, int number_points);
 
 void Initialize3DPoints(vector<CaliObjectOpenCV2>& COs, double* threeDpoints, int number_points);
 
-void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, Matrix& X, vector<Matrix>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
+void ReconstructXFunctionIndividuals(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, Matrix4d& X, vector<Matrix4d>& Zs, double* threeDpoints, vector<double>& reprojection_errors,
 		std::ofstream& out);
 
 #endif /* COSTFUNCTIONS_HPP_ */

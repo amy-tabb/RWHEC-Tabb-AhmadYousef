@@ -3,6 +3,7 @@
  *
  *  Created on: Nov 18, 2015
  *      Author: atabb
+ *      Updated on May25 to use Eigen instead of newmat
  */
 
 #ifndef COSTFUNCTIONS1_2_HPP_
@@ -15,6 +16,11 @@
 #include "Calibration2.hpp"
 #include <iostream>
 
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+
+using namespace Eigen;
+
 using ceres::AutoDiffCostFunction;
 using ceres::CostFunction;
 using ceres::Problem;
@@ -23,7 +29,7 @@ using ceres::Solve;
 
 using namespace std;
 
-enum PARAM_TYPE {Euler, AxisAngle, Quaternion };
+enum PARAM_TYPE {Euler, AxisAngle, Cali_Quaternion };
 enum COST_TYPE {c1, c2, rp1, rp2 };
 
 template <typename T>
@@ -1172,11 +1178,11 @@ struct RP1_2_multi {
 	double* weighting;
 };
 
-void CF1_2_one_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
+void CF1_2_one_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void CF1_2_multi_camera(vector< vector<Matrix> >& As, vector<Matrix>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
+void CF1_2_multi_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix>& Bs, double* camera_params, double* x,
+void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
 void CopyFromCalibration(vector<CaliObjectOpenCV2>& COs, double* camera_params);

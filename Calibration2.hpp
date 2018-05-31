@@ -5,17 +5,21 @@
  *      Author: atabb
  */
 
-#ifndef ROBOTWORLDHANDEYECALIDUALEXP0_SRC_CALIBRATION2_HPP_
-#define ROBOTWORLDHANDEYECALIDUALEXP0_SRC_CALIBRATION2_HPP_
+#ifndef CALIBRATION2_HPP_
+#define CALIBRATION2_HPP_
 
-#include <opencv/cv.h>
-#include <opencv/cxcore.h>
-#include <opencv/highgui.h>
-
-#include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui/highgui_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
-//#include <opencv2/legacy/legacy.hpp>
+#include <opencv2/calib3d/calib3d.hpp>
+
+
+#include <Eigen/Dense>
+#include <Eigen/Eigenvalues>
+
+using namespace Eigen;
 
 #include <math.h>
 #include <cstdlib>
@@ -24,9 +28,6 @@
 
 #include "DirectoryFunctions.hpp"
 #include "StringFunctions.hpp"
-
-#include <newmat/newmatap.h>     // newmat advanced functions
-#include <newmat/newmatio.h>     // newmat headers including output functions
 
 using namespace std;
 
@@ -50,29 +51,21 @@ public:
 	vector< vector <double> > Rt;
 	vector< vector< vector <double> > > Rts;
 
-
-	//vector< pair<char, vector<CvPoint2D32f> > > ext_position_by_pattern;
-
-	//vector<IplImage*> images_to_process;
 	vector<cv::Mat> internal_images;
 	vector<cv::Mat> external_images;
 	vector<int> indices;
 
-	ColumnVector PA;
-	ColumnVector PB;
+	VectorXd PA;
+	VectorXd PB;
+
 
 	int number_internal_images_written;
 
-	int chess_h_aux;
+
 	cv::Size image_size;
 
 	string text_file;
 
-
-
-
-//	CaliObject(int i, int w, int h, double s);
-//
 	CaliObjectOpenCV2(int i, int w, int h, double s_w_i, double s_h_i);
 
 	void ReadImages(string internal_dir, bool flag);
@@ -87,7 +80,6 @@ public:
 
 	void LevMarCameraCaliNoDistortion(vector< vector<cv::Point2f> >& imagep, vector< vector<cv::Point3f> >& worldp,
 			std::ofstream& out);
-
 
 };
 

@@ -52,8 +52,6 @@ void ReadDirectory(string dir_name, vector<string>& content_names){
 	}
 	closedir (dir);
 
-	//cout << "Exit read dir" << endl;
-
 	std::sort(content_names.begin(), content_names.end(), SortbyLength);
 
 	for (int i = 0; i < int(content_names.size()); i++){

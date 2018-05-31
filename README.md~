@@ -10,7 +10,7 @@ Eigen 3.2.0
 A deprecated version using earlier versions of OpenCV (and newmat for matrix handling instead of Eigen) is available https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef2017. 
 
 
-A bug with regards to the computation of the translation error has been corrected. In additon, the code has been cleaned up in this version versus the previous one.  If you wish to understand the code, this is the version to use.  The performance of both versions is identical so far as I can tell on my machines.
+A bug with regards to the computation of the translation error has been corrected. In additon, the code has been cleaned up.  The use of this version is highly recommended over the prior version (though the bug is fixed in the prior version as well).
 
 ---------------------------------------------------------------------
 BUILDING AND RUNNING
