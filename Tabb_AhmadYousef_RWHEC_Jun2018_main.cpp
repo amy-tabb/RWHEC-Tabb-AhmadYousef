@@ -660,13 +660,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 						}
 					}
 
-					if (param_type == Euler){
-						for (int i = 0; i < (robot_mounted_cameras + 1)*7; i++){
-							if (i%7 == 1){
-								xarray[i] = 3.14/2.0;
-							}
-						}
-					}
 
 
 					// solve
