@@ -67,9 +67,9 @@ We are not responsible for whatever it takes to get Ceres to build; but advise t
 
 [OpenCV](http://opencv.org/) As of this writing, the version installed from [github](https://github.com/opencv/opencv) is returning OpenCV 4.0.
 
-To convert code written under OpenCV 3.0 to OpenCV 4.0, the biggest change revolved around calibration flag enums such as CV_CALIB_CB_ADAPTIVE_THRESH.  To get this code to compile under OpenCV 4.0, all I did was change such a flag to cv::CALIB_CB_ADAPTIVE_THRESH.  To go back to OpenCV 3.0, you would do the opposite.
+To convert code written under OpenCV 3.0 to OpenCV 4.0, the biggest change revolved around calibration flag enums such as `CV_CALIB_CB_ADAPTIVE_THRESH`.  To get this code to compile under OpenCV 4.0, all I did was change such a flag to `cv::CALIB_CB_ADAPTIVE_THRESH`.  To go back to OpenCV 3.0, you would do the opposite.  I have left the OpenCV 3.x code intact, but commented -- so if you have OpenCV < 4.0, try to compile, find the errors, comment out the OpenCV 4.0 version, and uncomment the OpenCV 3.x versions.  
 
-This code has been tested on Ubuntu 14.04.  You are welcome to convert it to Windows, but we have not.  While OpenCV is available from the repositories, my long experience with it is always to build from the source to get the best results.
+This code has been tested on Ubuntu 14.04 (for OpenCV 3.x) and Ubuntu 16.04 (for OpenCV 3.x and 4.0).  You are welcome to convert it to Windows, but we have not.  While OpenCV is available from the repositories, my long experience with it is always to build from the source to get the best results.
 
 **Is getting all of this to work on your system too much of a pain and you are interested in a Docker release?  Let me know!  The squeaky wheel gets the grease.  Email above.**
 
