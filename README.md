@@ -163,7 +163,7 @@ For each camera, a directory will be generated with the name `camera_results*` i
 
 ## Robot-world, hand-multiple-eye calibration:
 
-A. For each method, a directory will be generated with the short name of the method in the write directory. To correspond directories to the methods in the paper, look at the code in the switch statement (copied below).  "rwhe_E_c1_simul" is an abbreviated form of "robot-world, hand-eye calibration using Euler parameterization of rotation components, c1 cost function, simultaneous version."  Each directory contains the following:
+A. For each method, a directory will be generated with the short name of the method in the write directory. To correspond directories to the methods in the paper, look at the code in the switch statement (copied at the end of this README).  "rwhe_E_c1_simul" is an abbreviated form of "robot-world, hand-eye calibration using Euler parameterization of rotation components, c1 cost function, simultaneous version."  Each directory contains the following:
 
 1.  A directory for each camera, with the location of the camera as computed by the robot-world, hand-eye calibration method detailed in `cali.txt`.
 
