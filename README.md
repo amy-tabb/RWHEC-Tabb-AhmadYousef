@@ -71,7 +71,7 @@ To convert code written under OpenCV 3.0 to OpenCV 4.0, the biggest change revol
 
 This code has been tested on Ubuntu 14.04.  You are welcome to convert it to Windows, but we have not.  While OpenCV is available from the repositories, my long experience with it is always to build from the source to get the best results.
 
-**Is getting all of this to work on your system too much of a pain and you are interested in a Docker release?  Let me know!  The sqeaky wheel gets the grease.  Email above.**
+**Is getting all of this to work on your system too much of a pain and you are interested in a Docker release?  Let me know!  The squeaky wheel gets the grease.  Email above.**
 
 ## Building 
 
