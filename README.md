@@ -17,7 +17,7 @@ A deprecated version using earlier versions of OpenCV (and newmat for matrix han
 
 A bug with regards to the computation of the translation error has been corrected. In additon, the code has been cleaned up in this version versus the previous one.  If you wish to understand the code, this is the version to use.  The performance of both versions is identical so far as I can tell on my machines.
 
-# Underlying ideas and citing
+# Underlying ideas; how and when to cite this work
 
 This README file is to accompany code for robot-world, hand-eye calibration, produced by Amy Tabb as companion to a paper:
 	Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods
@@ -95,7 +95,7 @@ cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=
 ## Running
 
 
-1. The executable using the method above is going to be in the build folder.  The arguments for the program are:
+1. The executable using the method above is going to be in the `build` folder.  The arguments for the program are:
 
 	A. input directory -- this is where the images and robot positions are held.
 
@@ -165,15 +165,17 @@ For each camera, a directory will be generated with the name `camera_results*` i
 
 A. For each method, a directory will be generated with the short name of the method in the write directory. To correspond directories to the methods in the paper, look at the code in the switch statement (copied below).  "rwhe_E_c1_simul" is an abbreviated form of "robot-world, hand-eye calibration using Euler parameterization of rotation components, c1 cost function, simultaneous version."  Each directory contains the following:
 
-	1.  A directory for each camera, with the location of the camera as computed by the robot-world, hand-eye calibration method detailed in cali.txt.
-	2. details.txt, a log of the progress of the method, including the output from Ceres.
+1.  A directory for each camera, with the location of the camera as computed by the robot-world, hand-eye calibration method detailed in `cali.txt`.
 
-	3. reproj*_*.png, for each image where the calibration pattern was found, the difference between the reprojected world points of the calibration, as computed using the robot-world, hand-eye calibration X and Z and the original image points is represented with a blue line. In the terminology of our paper, the two points are x_ij-tilde-arrow in Equation 13, and x_ij-arrow.  The sum of the squared line distances for all images in shown in Eq. 14.
+2. `details.txt`, a log of the progress of the method, including the output from Ceres.
 
-	4. transformations.txt, gives the X and Z matrices for the robot-world, hand-eye calibration method.  If there was more than one camera, there will be more than one Z matrix. 
+3. `reproj*_*.png`, for each image where the calibration pattern was found, the difference between the reprojected world points of the calibration, as computed using the robot-world, hand-eye calibration X and Z and the original image points is represented with a blue line. In the terminology of our paper, the two points are x_ij-tilde-arrow in Equation 13, and x_ij-arrow.  The sum of the squared line distances for all images in shown in Eq. 14.
+
+4. `transformations.txt`, gives the X and Z matrices for the robot-world, hand-eye calibration method.  If there was more than one camera, there will be more than one Z matrix. 
 	
-	Note** if you are using one of the methods that also refines the camera calibration parameters, you will have to read that from the "details" file. 
-	For instance, these are camera calibration parameters (in vector format), followed by the transformation matrices, for the three-camera case:
+**Note: if you are using one of the methods that also refines the camera calibration parameters, you will have to read that from the `details file`.** 
+
+For instance, these are camera calibration parameters (in vector format), followed by the transformation matrices, for the three-camera case:
 
 ```
 	camera cali parameters: 
@@ -206,11 +208,11 @@ A. For each method, a directory will be generated with the short name of the met
 	0.000000 0.000000 0.000000 1.000000 
  ```
 
-B. Besides the directories for each method, there will be a directory titled "reconstructions".  This has .ply files for the calibration pattern reconstructed using the calibration information from each method, including the ground truth (ideal.ply), and is sometimes useful for visualization purposes.  These model files can be viewed in a viewer such as MeshLab.
+B. Besides the directories for each method, there will be a directory titled `reconstructions`.  This has .ply files for the calibration pattern reconstructed using the calibration information from each method, including the ground truth (ideal.ply), and is sometimes useful for visualization purposes.  These model files can be viewed in a viewer such as [MeshLab](http://www.meshlab.net/).
 
-C. comparisons.txt, shows the results according to the metrics we discuss in our paper, excepting the reconstruction accuracy metric.
+C. `comparisons.txt`, shows the results according to the metrics we discuss in our paper, excepting the reconstruction accuracy metric.
 
-D. reconstruction_accuracy_error_comparisons.txt, shows the individual results for the reconstruction accuracy metric.
+D. `reconstruction_accuracy_error_comparisons.txt`, shows the individual results for the reconstruction accuracy metric.
 
 ````c++
 		switch (option) {
