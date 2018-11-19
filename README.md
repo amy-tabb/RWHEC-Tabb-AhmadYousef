@@ -4,13 +4,13 @@ Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 Methods for robot-world, hand-eye calibration; version 2.0.
 
-June 1, 2018: This code is up an updated version using the following versions of external libraries:
+November 19, 2018: This code is up an updated version using the following versions of external libraries:
 
 OpenCV 4.0 (OpenCV 3.0 may work with changes of some enums - read below)
 
-Ceres 1.11
+Ceres 1.14
 
-Eigen 3.2.0
+Eigen 3.3.4
 
 A deprecated version using earlier versions of OpenCV (and newmat for matrix handling instead of Eigen) is available https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef2017. 
 
@@ -69,31 +69,36 @@ We are not responsible for whatever it takes to get Ceres to build; but advise t
 
 To convert code written under OpenCV 3.0 to OpenCV 4.0, the biggest change revolved around calibration flag enums such as `CV_CALIB_CB_ADAPTIVE_THRESH`.  To get this code to compile under OpenCV 4.0, all I did was change such a flag to `cv::CALIB_CB_ADAPTIVE_THRESH`.  To go back to OpenCV 3.0, you would do the opposite.  I have left the OpenCV 3.x code intact, but commented -- so if you have OpenCV < 4.0, try to compile, find the errors, comment out the OpenCV 4.0 version, and uncomment the OpenCV 3.x versions.  
 
-This code has been tested on Ubuntu 14.04 (for OpenCV 3.x) and Ubuntu 16.04 (for OpenCV 3.x and 4.0).  You are welcome to convert it to Windows, but we have not.  While OpenCV is available from the repositories, my long experience with it is has always been to build from the source to get the best results.
+This code has been tested on Ubuntu 14.04 (for OpenCV 3.x) and Ubuntu 16.04 (for OpenCV 3.x and 4.0).  You are welcome to convert it to Windows, but I have not.  While OpenCV is available from distribution repositories, my long experience with it is has always been to build from the source to get the best results.
 
 **Is getting all of this to work on your system too much of a pain and you are interested in a Docker release?  Let me know!  The squeaky wheel gets the grease.  Email above.**
 
 ## Building 
 
 Building:
-These instructions assume that you use cmake to generate a project file for the Eclipse Integrated Development Environment (IDE).  There are other methods for using cmake to generate an executable.  You are welcome to use them.  These instructions are provided to give the basics assuming you have an Eclipse installation.
+These instructions assume that you use cmake to generate a project file for the Eclipse Integrated Development Environment (IDE).  There are other methods for using cmake to generate an executable.  You are welcome to use them.  These instructions are provided to give the basics assuming you have an Eclipse installation, and cloned this git repository.  Experienced users, alter at will.
 
-1. The code is provided in a directory called `code_src`, along with a `CMakeLists.txt` file.  Place and/or rename `code_src` in a location of your choosing. 
+*These instructions have recently been revised, Nov. 19, 2018.*
 
-2. Create a directory.  I'll call mine `build`. 
+1. Clone the git repository.  `cd` to the desired directory, then from the command line  -- ` git clone https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef.git`.  
 
-3. Then cd to the build directory: from bash `$ cd build`.
+2. `$ cd RWHEC-Tabb-AhmadYousef`
 
-4. Then, copy the following string to the base command line: 
+3. The code is provided in a directory called `code_src`, along with a `CMakeLists.txt` file.  
+
+4. Create a directory within the `RWHEC-Tabb-AhmadYousef`.  I'll call mine `build`. 
+
+5. Then cd to the build directory: from bash `$ cd build`.
+
+6. Then, copy the following string to the base command line: 
 ```
-cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE path_to_src
+cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE ../code_src/
 ```
-(where you replace `path_to_src` with the path to where you put the `code_src` folder.)
+(if you are doing your own thing, you can replace `../code_src/` with the path to where you put the `code_src` folder.)
 
 5. Then, go to the Eclipse IDE, CDT (C development toolkit). Go to File->Import->Existing projects into workspace. Select the project in the `build` directory.  This will load the project into Eclipse.  Build from Eclipse, and you're ready to run.
 
 ## Running
-
 
 1. The executable using the method above is going to be in the `build` folder.  The arguments for the program are:
 
