@@ -80,23 +80,22 @@ These instructions assume that you use cmake to generate a project file for the 
 
 *These instructions have recently been revised, Nov. 19, 2018.*
 
-1. Clone the git repository.  `cd` to the desired directory, then from the command line  -- ` git clone https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef.git`.  
+ 1. Clone the git repository.  `cd` to the desired directory, then from the command line  -- ` git clone https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef.git`.  
 
 2. `$ cd RWHEC-Tabb-AhmadYousef`
 
 3. The code is provided in a directory called `code_src`, along with a `CMakeLists.txt` file.  
 
-4. Create a directory within the `RWHEC-Tabb-AhmadYousef`.  I'll call mine `build`. 
+4. Then cd to the build directory: from bash `$ cd build`.
 
-5. Then cd to the build directory: from bash `$ cd build`.
-
-6. Then, copy the following string to the base command line: 
+5. Then, copy the following string to the base command line: 
 ```
 cmake -G"Eclipse CDT4 - Unix Makefiles" -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE ../code_src/
 ```
 (if you are doing your own thing, you can replace `../code_src/` with the path to where you put the `code_src` folder.)
 
-5. Then, go to the Eclipse IDE, CDT (C development toolkit). Go to File->Import->Existing projects into workspace. Select the project in the `build` directory.  This will load the project into Eclipse.  Build from Eclipse, and you're ready to run.
+6. Then, go to the Eclipse IDE, CDT (C development toolkit). Go to File->Import->Existing projects into workspace. Select the project in the `build` directory.  This will load the project into Eclipse.  Build from Eclipse, and you're ready to run.
+
 
 ## Running
 
