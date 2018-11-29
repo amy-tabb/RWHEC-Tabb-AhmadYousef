@@ -73,6 +73,8 @@ This code has been tested on Ubuntu 14.04 (for OpenCV 3.x) and Ubuntu 16.04 (for
 
 **Is getting all of this to work on your system too much of a pain and you are interested in a Docker release?  Let me know!  The squeaky wheel gets the grease.  Email above.**
 
+**Windows:** yulong314 reports that the code builds on Windows in VisualStudio 2013, with the addition of include file `dirent.h`.  29 November 2018.
+
 ## Building 
 
 Building:
