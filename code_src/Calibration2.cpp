@@ -22,8 +22,6 @@ CaliObjectOpenCV2::CaliObjectOpenCV2(int i, int w, int h,  double s_w_i, double 
 	mm_width = s_w_i;
 	image_size =  cv::Size(0, 0);
 	text_file = "";
-
-	//chess_h_aux = 0;
 	mean_ext_reproj_error = 0;
 
 }
@@ -428,15 +426,14 @@ void CaliObjectOpenCV2::Calibrate(std::ofstream& out, string write_directory){
 
 	vector<cv::Mat> rvecs, tvecs;
 
-	if (image_size.width > 640){
-		cameraMatrix.at<double>(0, 0) = 2500;
-		cameraMatrix.at<double>(1, 1) = 2500;
-	}	else {
-		cameraMatrix.at<double>(0, 0) = 1800;
-		cameraMatrix.at<double>(1, 1) = 1800;
-		cameraMatrix.at<double>(0, 0) = 1000;
-		cameraMatrix.at<double>(1, 1) = 1000;
-	}
+	double max_dim = image_size.width;
+	max_dim < image_size.height ? max_dim = image_size.height : 0;
+
+	double focal_length_px = max_dim*1.2;
+
+	cameraMatrix.at<double>(0, 0) = focal_length_px;
+	cameraMatrix.at<double>(1, 1) = focal_length_px;
+
 	cameraMatrix.at<double>(0, 2) = image_size.width/2;
 	cameraMatrix.at<double>(1, 2) = image_size.height/2;
 
@@ -451,12 +448,7 @@ void CaliObjectOpenCV2::Calibrate(std::ofstream& out, string write_directory){
 
 	cout << "Running calibration " << endl;
 	cout << "Number of dist coefficients  = " << distCoeffs.rows << endl;
-	//LevMarCameraCaliNoDistortion(all_points, all_3d_corners, out);
-	//double rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs, CV_CALIB_USE_INTRINSIC_GUESS,
-	//		cv::TermCriteria( cv::TermCriteria::COUNT, 2, DBL_EPSILON) );  //, CV_CALIB_RATIONAL_MODEL );
-	//CV_CALIB_FIX_PRINCIPAL_POINT |
-	//double rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-	//		CV_CALIB_USE_INTRINSIC_GUESS| CV_CALIB_RATIONAL_MODEL);
+
 
 
 	// this one does not use the initial guess
@@ -467,7 +459,7 @@ void CaliObjectOpenCV2::Calibrate(std::ofstream& out, string write_directory){
 		//		CV_CALIB_RATIONAL_MODEL);
 		// OpenCV versions
 		rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-						CALIB_RATIONAL_MODEL);
+				CALIB_RATIONAL_MODEL);
 
 
 	}	else {
@@ -643,18 +635,14 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 
 	vector<cv::Mat> rvecs, tvecs;
 
-	if (image_size.width > 640){
-		cameraMatrix.at<double>(0, 0) = 2500;
-		cameraMatrix.at<double>(1, 1) = 2500;
-	}	else {
-		cameraMatrix.at<double>(0, 0) = 1800;
-		cameraMatrix.at<double>(1, 1) = 1800;
-		cameraMatrix.at<double>(0, 0) = 1000;
-		cameraMatrix.at<double>(1, 1) = 1000;
+	double max_dim = image_size.width;
+	max_dim < image_size.height ? max_dim = image_size.height : 0;
 
-		cameraMatrix.at<double>(0, 0) = 600;
-		cameraMatrix.at<double>(1, 1) = 600;
-	}
+	double focal_length_px = max_dim*1.2;
+
+	cameraMatrix.at<double>(0, 0) = focal_length_px;
+	cameraMatrix.at<double>(1, 1) = focal_length_px;
+
 	cameraMatrix.at<double>(0, 2) = image_size.width/2;
 	cameraMatrix.at<double>(1, 2) = image_size.height/2;
 
@@ -669,29 +657,13 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 
 	cout << "Running calibration " << endl;
 	cout << "Number of dist coefficients  = " << distCoeffs.rows << endl;
-	//LevMarCameraCaliNoDistortion(all_points, all_3d_corners, out);
-	//double rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs, CV_CALIB_USE_INTRINSIC_GUESS,
-	//		cv::TermCriteria( cv::TermCriteria::COUNT, 2, DBL_EPSILON) );  //, CV_CALIB_RATIONAL_MODEL );
-	//CV_CALIB_FIX_PRINCIPAL_POINT |
-	//double rms = cv::calibrateCamera(all_3d_corners, all_points, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-	//		CV_CALIB_USE_INTRINSIC_GUESS| CV_CALIB_RATIONAL_MODEL);
 
-
-	// this one does not use the initial guess
-	//double rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-	//		CV_CALIB_RATIONAL_MODEL);
 
 	double rms = 0;
 	char ch;
-//	cout << "Before first " << endl; cin >> ch;
-//	rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-//							CV_CALIB_RATIONAL_MODEL);
 
 
 	if (text_file.size() == 0){
-		// submitted Transactions paper has rational model
-		//rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-		//		CV_CALIB_RATIONAL_MODEL);
 
 		rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs);
 
@@ -716,20 +688,11 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 			cout << endl;
 		}
 
-//		cout << "Before first " << endl; cin >> ch;
-//		rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-//						CV_CALIB_RATIONAL_MODEL);
-
-		//cout << "Before second " << endl; cin >> ch;
-		// submitted Transactions paper has rational model
-		//rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-		//		CV_CALIB_RATIONAL_MODEL| CV_CALIB_USE_INTRINSIC_GUESS);
-
-	//	rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-	//					CV_CALIB_USE_INTRINSIC_GUESS);
+		//	rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
+		//					CV_CALIB_USE_INTRINSIC_GUESS);
 		// OpenCV versions
 		rms = cv::calibrateCamera(all_3d_corners, all_points_wo_blanks, image_size, cameraMatrix, distCoeffs, rvecs, tvecs,
-								CALIB_USE_INTRINSIC_GUESS);
+				CALIB_USE_INTRINSIC_GUESS);
 	}
 
 
@@ -807,12 +770,7 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 		Rts.push_back(vector<vector <double> >());
 	}
 
-//	cout << "Line 1364 " << endl;
-//	cout << "number internal images written " << number_internal_images_written << endl;
-//	cout << "Number of total pattterns " << all_points_wo_blanks.size() << endl;
-//	cout << "Number rvecs " << rvecs.size() << endl;
-//	cout << "Number Rts " << Rts.size() << endl;
-//	cin >> ch;
+
 	// we only want these for the external images ....
 	for (int m = number_internal_images_written; m < int(all_points_wo_blanks.size()); m++){
 
@@ -827,11 +785,7 @@ void CaliObjectOpenCV2::CalibrateFlexibleExternal(std::ofstream& out, string wri
 
 			tempRt[i][3] = tvecs[m].at<double>(i);
 		}
-//		cout << "after tempRT " << endl; cin >> ch;
-//
-//		cout << "mapping " << mapping_from_limited_to_full.at(m) << endl; cin >> ch;
 
-		//Rts.push_back(tempRt);
 		Rts[mapping_from_limited_to_full.at(m) - number_internal_images_written] = tempRt;
 		//cout << "RTs " << endl; cin >> ch;
 
