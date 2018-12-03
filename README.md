@@ -132,7 +132,8 @@ Each of these directories, should contain directories by camera with images.  Fo
 The `images` directory represents the images for each stop of the robot.  `internal_images` contains extra images that are used for camera calibration only.  The directory structure of `camera0`, `camera1`, etc. within `internal_images` should be used, if `internal_images` is present.
 
 ## Required files:
-1. `calibration_object.txt` : This file gives the specification of the calibration pattern.  The units can be changed, and the particular strings used 'chess_mm_height', 'chess_mm_width' are not used by the program.  However, the ORDER of the parameters matters.  So make sure the use of units is consistent, and do not switch the height and width ordering within the file.
+1. `calibration_object.txt` : This file gives the specification of the calibration pattern.  The units can be changed, however at this time the particular strings used are 'chess_mm_height', 'chess_mm_width' by the program. Make sure that if you are not using millimeters, that you are aware of which units you are using!
+
 	Example from dataset 1:
 
 ```

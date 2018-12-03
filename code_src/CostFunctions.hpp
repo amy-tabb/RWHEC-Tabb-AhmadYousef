@@ -1177,9 +1177,9 @@ struct ReconstructX {
 
 void CF1_2_one_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, double* z, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void CF1_2_multi_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
+void CF1_2_multi_camera(vector< vector<MatrixXd> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);
 
-void CF1_2_multi_camera_separable(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type);
+void CF1_2_multi_camera_separable(vector< vector<MatrixXd> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type);
 
 void RP1_2_multi_camera(vector<CaliObjectOpenCV2>& COs, vector<Matrix4d>& Bs, double* camera_params, double* x,
 		std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type);

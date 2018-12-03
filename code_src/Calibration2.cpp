@@ -310,28 +310,29 @@ bool CaliObjectOpenCV2::AccumulateCornersFlexibleExternal(bool draw_corners){
 		// OpenCV version differences
 		corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH + CALIB_CB_NORMALIZE_IMAGE + CALIB_CB_FAST_CHECK + CALIB_CB_FILTER_QUADS);
 
-		if (!corner_found){
-			cout << "Trying default option " << endl;
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf);
-		}
-
-		if (!corner_found){
-			cout << "Trying  option one" << endl;
-			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_NORMALIZE_IMAGE);
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_NORMALIZE_IMAGE);
-		}
-
-		if (!corner_found){
-			cout << "Trying  option two" << endl;
-			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_FILTER_QUADS);
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_FILTER_QUADS);
-		}
-
-		if (!corner_found){
-			cout << "Trying  option three" << endl;
-			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH);
-			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH);
-		}
+		// December 3, 2018 -- can uncomment if you like, but experience is that individually, trying these flags do not help with localizing the pattern.
+//		if (!corner_found){
+//			cout << "Trying default option " << endl;
+//			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf);
+//		}
+//
+//		if (!corner_found){
+//			cout << "Trying  option one" << endl;
+//			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_NORMALIZE_IMAGE);
+//			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_NORMALIZE_IMAGE);
+//		}
+//
+//		if (!corner_found){
+//			cout << "Trying  option two" << endl;
+//			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_FILTER_QUADS);
+//			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_FILTER_QUADS);
+//		}
+//
+//		if (!corner_found){
+//			cout << "Trying  option three" << endl;
+//			//corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf, CV_CALIB_CB_ADAPTIVE_THRESH);
+//			corner_found = cv::findChessboardCorners(gimage, boardsize, pointBuf,  CALIB_CB_ADAPTIVE_THRESH);
+//		}
 
 		if (corner_found) {
 
