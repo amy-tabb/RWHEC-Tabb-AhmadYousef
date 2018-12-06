@@ -193,8 +193,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	string internal_dir;
 	string external_dir = source_dir + "/images";
 
-
-
 	vector<vector<MatrixXd> > As;
 	vector<Matrix4d> Bs;
 	int number_cameras;
@@ -203,7 +201,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	vector<int> number_images_per(robot_mounted_cameras, 0);
 	int total_number_images_all_cameras = 0;
 
-	char ch;
+	//char ch;
 
 	if (do_camcali){
 		for (int i = 0; i < robot_mounted_cameras; i++){
@@ -233,7 +231,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 			COs[k].ReadImages(external_dir, 1);
 
-			//cout << "Before accumulate " << endl;
 			// argument is whether or not to draw the corners ....
 			COs[k].AccumulateCornersFlexibleExternal(true);
 
@@ -262,9 +259,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			for (int i = 0; i < int(COs[k].Rts.size()); i++){
 				//cout << "i " << i << endl;
 				if (COs[k].Rts[i].size() > 0){
-					//cout << "A1 rows, cols  " << A1.rows() << ", " << A1.cols() << endl;
 					A1.setIdentity();
-					//A1(4, 4) = 1;
 
 					for (int r = 0; r < 3; r++){
 						for (int c = 0; c < 4; c++){
@@ -280,12 +275,9 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 			total_number_images_all_cameras += number_images_per[k];
 			out.close();
-			//cout << "End of 282 " << endl;
-			//cin >> ch;
 		}
 
-		//cout << "Before program readable details write " << endl;
-		//cin >> ch;
+
 		// need to write
 		for (int k = 0; k < robot_mounted_cameras; k++){
 			filename = write_dir + "/camera_results" + ToString<int>(k) + "/program_readable_details.txt";
@@ -296,7 +288,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			// write the internal matrix
 			for (int i = 0; i < 3; i++){
 				for (int j = 0; j < 3; j++){
-					out << COs[k].A[i][j] << " ";
+					out << std::setprecision(9) << COs[k].A[i][j] << " ";
 				}
 			}
 			out << endl;
@@ -397,9 +389,6 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					in >> flag_present;
 
 					saved_flag.push_back(flag_present);
-
-					// TODO -- this is wrong !!! b/c all will have size 4.  Then they all will be used in the optimization.
-					// recheck.
 
 					if (flag_present == true){
 						As[k].push_back(m4);
@@ -541,7 +530,8 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	}
 
 
-	// All of the methods
+	// All of the methods -- this is optional.  You could choose one or two methods to save time, for instance, a reprojection error method is recommended.
+	// (suggest any of 12-16)
 	for (int option = 0; option < 18; option++ )
 	{
 
@@ -1543,7 +1533,7 @@ double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<MatrixXd>& As, v
 		newA = Z*Bs[i]*X.inverse();
 
 
-		out << "newA for i " << endl << newA << endl;
+		out << "newA for i " << i <<  endl << newA << endl;
 	}
 
 	return reproj_error;
