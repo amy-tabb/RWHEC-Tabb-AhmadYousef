@@ -4,7 +4,7 @@ Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 Methods for robot-world, hand-eye calibration; version 2.0.
 
-November 19, 2018: This code is up an updated version using the following versions of external libraries:
+~June, 2018: This code is up an updated version using the following versions of external libraries:
 
 OpenCV 4.0 (OpenCV 3.0 may work with changes of some enums - read below)
 
@@ -14,6 +14,9 @@ Eigen 3.3.4
 
 A deprecated version using earlier versions of OpenCV (and newmat for matrix handling instead of Eigen) is available https://github.com/amy-tabb/RWHEC-Tabb-AhmadYousef2017. 
 
+November 19, 2018: Eclipse project version
+
+December 6, 2018: fix on Eigen version bug.
 
 A bug with regards to the computation of the translation error has been corrected. In additon, the code has been cleaned up in this version versus the previous one.  If you wish to understand the code, this is the version to use.  The performance of both versions is identical so far as I can tell on my machines.
 
