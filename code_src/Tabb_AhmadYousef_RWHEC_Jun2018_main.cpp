@@ -1,6 +1,7 @@
 // This code is being distributed with no warranties whatsoever.
 //
 // Author: Amy Tabb.  Original release circa 2016.  Current date May 30, 2018.
+// small updates Dec. 3 2018
 //
 //  If you use this code to calibrate a robot in an academic setting, please cite this paper!  Thanks a bunch.
 //@article{tabb_solving_2017,
@@ -65,7 +66,10 @@ int main(int argc, char** argv) {
 	if (argc >= 3){
 		source_dir =   string(argv[1]);
 		write_dir = argv[2];
-		cali_object_file =  string(argv[1]) + "/calibration_object.txt";
+
+		EnsureDirHasTrailingBackslash(source_dir);
+
+		cali_object_file =  string(source_dir) + "calibration_object.txt";
 		if (argc == 4){
 			flag = FromString<int>(argv[3]);
 			do_camcali = false;
@@ -99,14 +103,63 @@ int main(int argc, char** argv) {
 		cout << cali_object_file << endl;
 		exit(1);
 	}
-
-
-	string temp;
-	in >> temp >> chess_mm_height;
-	in >> temp >> chess_mm_width;
-	in >> temp >> chess_height;
-	in >> temp >> chess_width;
 	in.close();
+
+
+//	string temp;
+//	in >> temp >> chess_mm_height;
+//	in >> temp >> chess_mm_width;
+//	in >> temp >> chess_height;
+//	in >> temp >> chess_width;
+//	in.close();
+
+	/////////////////////    READ CALIBRATION ITEMS FROM FILE /////////////////
+	string fieldString;
+	string returnString;
+
+	fieldString = "chess_mm_height";
+	returnString = FindValueOfFieldInFile(cali_object_file, fieldString, false);
+
+	if (returnString.size() != 0){
+		chess_mm_height = FromString<double>(returnString);
+	}	else {
+		cout << "Cannot find " << fieldString << "in " << cali_object_file << endl;
+		exit(1);
+	}
+
+
+	fieldString = "chess_mm_width";
+	returnString = FindValueOfFieldInFile(cali_object_file, fieldString, false);
+
+	if (returnString.size() != 0){
+		chess_mm_width = FromString<double>(returnString);
+	}	else {
+		cout << "Cannot find " << fieldString << "in " << cali_object_file << endl;
+		exit(1);
+	}
+
+
+	fieldString = "chess_height";
+	returnString = FindValueOfFieldInFile(cali_object_file, fieldString, false);
+
+	if (returnString.size() != 0){
+		chess_height = FromString<int>(returnString);
+	}	else {
+		cout << "Cannot find " << fieldString << "in " << cali_object_file << endl;
+		exit(1);
+	}
+
+
+	fieldString = "chess_width";
+	returnString = FindValueOfFieldInFile(cali_object_file, fieldString, false);
+
+	if (returnString.size() != 0){
+		chess_width = FromString<int>(returnString);
+	}	else {
+		cout << "Cannot find " << fieldString << "in " << cali_object_file << endl;
+		exit(1);
+	}
+
 
 	RobotWorldHandEyeCalibration(chess_mm_width, chess_mm_height, chess_height, chess_width, source_dir, write_dir, do_camcali, do_rwhec, do_reconstruction, VERBOSE);
 
@@ -129,7 +182,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	string filename;
 
 	// first determine the number of cameras involved
-	ReadDirectory(source_dir + "/images", camera_names);
+	ReadDirectory(source_dir + "images", camera_names);
 	robot_mounted_cameras = camera_names.size();
 
 
@@ -140,9 +193,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	string internal_dir;
 	string external_dir = source_dir + "/images";
 
-
-
-	vector<vector<Matrix4d> > As;
+	vector<vector<MatrixXd> > As;
 	vector<Matrix4d> Bs;
 	int number_cameras;
 
@@ -150,22 +201,25 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	vector<int> number_images_per(robot_mounted_cameras, 0);
 	int total_number_images_all_cameras = 0;
 
+	//char ch;
+
 	if (do_camcali){
 		for (int i = 0; i < robot_mounted_cameras; i++){
-			command = "mkdir " + write_dir + "/camera_results" + ToString<int>(i);
+			command = "mkdir " + write_dir + "camera_results" + ToString<int>(i);
 			int ret = system(command.c_str());
 		}
 
 		for (int k = 0; k < robot_mounted_cameras; k++){
+			cout << "calibrating number " << k << endl;
 			/////////////////////// Camera calibration ....///////////////////////////////////////////
-			filename = write_dir + "/camera_results" + ToString<int>(k) + "/details.txt";
+			filename = write_dir + "camera_results" + ToString<int>(k) + "/details.txt";
 			out.open(filename.c_str());
 
 			COs.push_back(CaliObjectOpenCV2(0, chess_w, chess_h,
 					square_mm_width, square_mm_height));
 
-			external_dir = source_dir + "/images/" + camera_names[k] ;
-			internal_dir = source_dir + "/internal_images/" + camera_names[k];
+			external_dir = source_dir + "images/" + camera_names[k] ;
+			internal_dir = source_dir + "internal_images/" + camera_names[k];
 
 			DIR* dir = opendir(internal_dir.c_str());
 			if (dir)
@@ -180,11 +234,11 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			// argument is whether or not to draw the corners ....
 			COs[k].AccumulateCornersFlexibleExternal(true);
 
-			COs[k].CalibrateFlexibleExternal(out,  write_dir + "/camera_results" + ToString<int>(k));
+			COs[k].CalibrateFlexibleExternal(out,  write_dir + "camera_results" + ToString<int>(k));
 			out.close();
 
 			// write cali file
-			filename = write_dir + "/camera_results" + ToString<int>(k) + "/cali.txt";
+			filename = write_dir + "camera_results" + ToString<int>(k) + "/cali.txt";
 			out.open(filename.c_str());
 
 			WriteCaliFile(&COs[k], out);
@@ -194,18 +248,18 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 			MatrixXd A1(4, 4);
 			MatrixXd B1(4, 4);
-			MatrixXd temp_matrix;
+			MatrixXd temp_matrix(0, 0);
 
 
-			As.push_back(vector<Matrix4d>());
+			As.push_back(vector<MatrixXd>());
 
 			number_cameras = COs[k].Rts.size();
 
 			// convert the external parameters from the camera calibration process into the A matrices
 			for (int i = 0; i < int(COs[k].Rts.size()); i++){
+				//cout << "i " << i << endl;
 				if (COs[k].Rts[i].size() > 0){
 					A1.setIdentity();
-					//A1(4, 4) = 1;
 
 					for (int r = 0; r < 3; r++){
 						for (int c = 0; c < 4; c++){
@@ -223,6 +277,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			out.close();
 		}
 
+
 		// need to write
 		for (int k = 0; k < robot_mounted_cameras; k++){
 			filename = write_dir + "/camera_results" + ToString<int>(k) + "/program_readable_details.txt";
@@ -233,7 +288,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 			// write the internal matrix
 			for (int i = 0; i < 3; i++){
 				for (int j = 0; j < 3; j++){
-					out << COs[k].A[i][j] << " ";
+					out << std::setprecision(9) << COs[k].A[i][j] << " ";
 				}
 			}
 			out << endl;
@@ -326,7 +381,7 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 				vector<cv::Point2f> image_points(corner_count);
 
 				Matrix4d m4;  m4.setIdentity();
-				As.push_back(vector<Matrix4d>());
+				As.push_back(vector<MatrixXd>());
 
 				vector<bool> saved_flag;
 
@@ -335,13 +390,13 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 					saved_flag.push_back(flag_present);
 
-					As[k].push_back(m4);
 					if (flag_present == true){
-
+						As[k].push_back(m4);
 						COs[k].all_points.push_back(image_points);
 						number_images_per[k]++;
 					}	else {
-
+						MatrixXd tempzero(0, 0);
+						As[k].push_back(tempzero);
 						COs[k].all_points.push_back(vector<cv::Point2f>());
 					}
 				}
@@ -475,7 +530,8 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 	}
 
 
-	// All of the methods
+	// All of the methods -- this is optional.  You could choose one or two methods to save time, for instance, a reprojection error method is recommended.
+	// (suggest any of 12-16)
 	for (int option = 0; option < 18; option++ )
 	{
 
@@ -1110,7 +1166,7 @@ void WriteCaliFile(CaliObjectOpenCV2* CO, std::ofstream& out){
 	}
 }
 
-void WriteCaliFile(CaliObjectOpenCV2* CO, vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z, std::ofstream& out){
+void WriteCaliFile(CaliObjectOpenCV2* CO, vector<MatrixXd>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z, std::ofstream& out){
 	out << As.size() << endl;
 
 	Matrix4d newA(4, 4);
@@ -1189,7 +1245,7 @@ void ReadRobotFileRobotCaliTxt(string filename, vector<Matrix4d>& Bs){
 	in.close();
 }
 
-double AssessErrorWhole(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
+double AssessErrorWhole(vector<MatrixXd>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
 	Matrix4d H;
 
@@ -1214,7 +1270,7 @@ double AssessErrorWhole(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X,
 	return error/number_stops;
 }
 
-double AssessRotationError(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
+double AssessRotationError(vector<MatrixXd>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
 	double local_error = 0;
 
@@ -1257,7 +1313,7 @@ double AssessRotationError(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d&
 	return error/number_stops;
 }
 
-double AssessRotationErrorAxisAngle(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
+double AssessRotationErrorAxisAngle(vector<MatrixXd>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
 	double local_error = 0;
 
@@ -1314,7 +1370,7 @@ double AssessRotationErrorAxisAngle(vector<Matrix4d>& As, vector<Matrix4d>& Bs, 
 
 
 
-double AssessTranslationError(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
+double AssessTranslationError(vector<MatrixXd>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z){
 	double error = 0;
 
 	Matrix3d RA;  Matrix3d RZ;
@@ -1399,7 +1455,7 @@ double AssessTranslationError(vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix
 	return (error/number_stops);
 }
 
-double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<Matrix4d>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z, std::ofstream& out, string directory, int cam_number){
+double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<MatrixXd>& As, vector<Matrix4d>& Bs, Matrix4d& X, Matrix4d& Z, std::ofstream& out, string directory, int cam_number){
 
 
 	double reproj_error = 0;
@@ -1477,7 +1533,7 @@ double CalculateReprojectionError(CaliObjectOpenCV2* CO, vector<Matrix4d>& As, v
 		newA = Z*Bs[i]*X.inverse();
 
 
-		out << "newA for i " << endl << newA << endl;
+		out << "newA for i " << i <<  endl << newA << endl;
 	}
 
 	return reproj_error;
@@ -1596,3 +1652,63 @@ void WritePatterns(double* pattern_points, int chess_h, int chess_w, int index_n
 
 	out.close();
 }
+
+string FindValueOfFieldInFile(string filename, string fieldTag, bool seperator){
+
+	/// reopen file each time, in case things get switched around.  Assume that these are very small files, not the most efficient.
+
+	ifstream in(filename.c_str());
+
+	if (!in.good()){
+		cout << "Filename to find " << fieldTag << " is bad " << filename << " quitting !" << endl;
+		exit(1);
+	}
+
+	string cmp_str;
+	string read_str;
+
+
+	vector<string> tokens;
+	string token;
+	string return_str = "";
+	bool found = false;
+
+
+	while (in  && found == false){
+
+		in >> token;
+
+		if (token.compare(fieldTag) == 0){
+			found = true;
+
+			if (seperator == true && in){
+				in >> token;
+			}
+
+			if (in){
+				in >> return_str;
+			}
+
+		}
+	}
+
+
+	cout << "Found! " << found << " field " << fieldTag << " and result " << return_str << endl;
+	in.close();
+
+	return return_str;
+
+}
+
+
+
+void EnsureDirHasTrailingBackslash(string& write_directory){
+	int n_letters = write_directory.size();
+	bool eval =  (write_directory[n_letters - 1] == '/');
+	cout << "Last character compare " << write_directory << " " <<  eval << endl;
+	if (eval == false){
+		write_directory = write_directory + "/";
+	}
+
+}
+

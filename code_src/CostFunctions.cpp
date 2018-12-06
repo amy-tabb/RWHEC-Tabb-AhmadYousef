@@ -66,8 +66,8 @@ void CF1_2_one_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, doub
 }
 
 
-
-void CF1_2_multi_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
+// the A Matrices may be empty, in the case of missing data.
+void CF1_2_multi_camera(vector< vector<MatrixXd> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type){
 
 	// make flexible for different numbers of images for different cameras ....
 	Problem problem;
@@ -193,7 +193,7 @@ void CF1_2_multi_camera(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, do
 }
 
 
-void CF1_2_multi_camera_separable(vector< vector<Matrix4d> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type){
+void CF1_2_multi_camera_separable(vector< vector<MatrixXd> >& As, vector<Matrix4d>& Bs, double* x, std::ofstream& out, PARAM_TYPE param_type, COST_TYPE cost_type, SEPARABLE_TYPE sep_type){
 
 	// make flexible for different numbers of images for different cameras ....
 	Problem problem;
