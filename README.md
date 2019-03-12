@@ -43,14 +43,18 @@ url="https://doi.org/10.1007/s00138-017-0841-7"
 
 Dataset and/or code:
 
-@electronic{tabb2017code_solving,
-author = {Tabb, Amy},
-year = {2017},
-title = {Data from: Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods. Ag Data Commons,
-doi = {10.15482/USDA.ADC/1340592},
-publisher = {Ag Data Commons},
-howpublished= {\url{http://dx.doi.org/10.15482/USDA.ADC/1340592}}
-} 
+@misc{tabb_data_2017,
+	title = {Data from: {Solving} the {Robot}-{World} {Hand}-{Eye}(s) {Calibration} {Problem} with {Iterative} {Methods}},
+	shorttitle = {Data from},
+	url = {https://data.nal.usda.gov/dataset/data-solving-robot-world-hand-eyes-calibration-problem-iterative-methods_3501},
+	language = {en},
+	urldate = {2019-03-12},
+	publisher = {Ag Data Commons},
+	author = {Tabb, Amy},
+	year = {2017},
+	doi = {10.15482/USDA.ADC/1340592},
+	note = {type: dataset}
+}
 
 
 
