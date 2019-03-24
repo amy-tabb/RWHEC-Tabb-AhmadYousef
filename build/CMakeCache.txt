@@ -79,7 +79,7 @@ CMAKE_C_FLAGS_RELEASE:STRING=-O3 -DNDEBUG
 CMAKE_C_FLAGS_RELWITHDEBINFO:STRING=-O2 -g -DNDEBUG
 
 //The Eclipse executable
-CMAKE_ECLIPSE_EXECUTABLE:FILEPATH=CMAKE_ECLIPSE_EXECUTABLE-NOTFOUND
+CMAKE_ECLIPSE_EXECUTABLE:FILEPATH=/usr/bin/eclipse
 
 //If disabled, CMake will not generate linked resource to the subprojects
 // and to the source files within targets
@@ -204,7 +204,16 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 Ceres_DIR:PATH=/usr/local/lib/cmake/Ceres
 
 //Eigen include directory
-EIGEN_INCLUDE_DIR:STRING=/usr/include/eigen3
+EIGEN_INCLUDE_DIR:STRING=/usr/local/include/eigen3
+
+//Path to a file.
+GFLAGS_INCLUDE_DIR:PATH=/usr/include
+
+//Path to a library.
+GFLAGS_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libgflags.so
+
+//gflags namespace (google or gflags)
+GFLAGS_NAMESPACE:STRING=google
 
 //Path to a file.
 GLOG_INCLUDE_DIR:PATH=/usr/include
@@ -236,9 +245,9 @@ CMAKE_CACHEFILE_DIR:INTERNAL=/home/atabb/git/RWHEC-Tabb-AhmadYousef/build
 //Major version of cmake used to create the current loaded cache
 CMAKE_CACHE_MAJOR_VERSION:INTERNAL=3
 //Minor version of cmake used to create the current loaded cache
-CMAKE_CACHE_MINOR_VERSION:INTERNAL=10
+CMAKE_CACHE_MINOR_VERSION:INTERNAL=5
 //Patch version of cmake used to create the current loaded cache
-CMAKE_CACHE_PATCH_VERSION:INTERNAL=2
+CMAKE_CACHE_PATCH_VERSION:INTERNAL=1
 //ADVANCED property for variable: CMAKE_COLOR_MAKEFILE
 CMAKE_COLOR_MAKEFILE-ADVANCED:INTERNAL=1
 //Path to CMake executable.
@@ -282,7 +291,7 @@ CMAKE_C_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT
 CMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT-ADVANCED:INTERNAL=1
 //STRINGS property for variable: CMAKE_ECLIPSE_VERSION
-CMAKE_ECLIPSE_VERSION-STRINGS:INTERNAL=3.2 (Callisto);3.3 (Europa);3.4 (Ganymede);3.5 (Galileo);3.6 (Helios);3.7 (Indigo);4.2 (Juno);4.3 (Kepler);4.4 (Luna);4.5 (Mars)
+CMAKE_ECLIPSE_VERSION-STRINGS:INTERNAL=3.2 (Callisto);3.3 (Europa);3.4 (Ganymede);3.5 (Galileo);3.6 (Helios);3.7 (Indigo);4.2 (Juno);4.3 (Kepler)
 //Executable file format
 CMAKE_EXECUTABLE_FORMAT:INTERNAL=ELF
 //ADVANCED property for variable: CMAKE_EXE_LINKER_FLAGS
@@ -313,6 +322,14 @@ CMAKE_GENERATOR:INTERNAL=Unix Makefiles
 CMAKE_GENERATOR_PLATFORM:INTERNAL=
 //Name of generator toolset.
 CMAKE_GENERATOR_TOOLSET:INTERNAL=
+//Have symbol pthread_create
+CMAKE_HAVE_LIBC_CREATE:INTERNAL=
+//Have library pthreads
+CMAKE_HAVE_PTHREADS_CREATE:INTERNAL=
+//Have library pthread
+CMAKE_HAVE_PTHREAD_CREATE:INTERNAL=1
+//Have include pthread.h
+CMAKE_HAVE_PTHREAD_H:INTERNAL=1
 //Source directory with the top level CMakeLists.txt file for this
 // project
 CMAKE_HOME_DIRECTORY:INTERNAL=/home/atabb/git/RWHEC-Tabb-AhmadYousef/code_src
@@ -345,7 +362,7 @@ CMAKE_PLATFORM_INFO_INITIALIZED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_RANLIB
 CMAKE_RANLIB-ADVANCED:INTERNAL=1
 //Path to CMake installation.
-CMAKE_ROOT:INTERNAL=/usr/share/cmake-3.10
+CMAKE_ROOT:INTERNAL=/usr/share/cmake-3.5
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS
 CMAKE_SHARED_LINKER_FLAGS-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_SHARED_LINKER_FLAGS_DEBUG
@@ -378,6 +395,14 @@ CMAKE_UNAME:INTERNAL=/bin/uname
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: EIGEN_INCLUDE_DIR
 EIGEN_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: GFLAGS_INCLUDE_DIR
+GFLAGS_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//Test GFLAGS_IN_GOOGLE_NAMESPACE
+GFLAGS_IN_GOOGLE_NAMESPACE:INTERNAL=1
+//ADVANCED property for variable: GFLAGS_LIBRARY
+GFLAGS_LIBRARY-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: GFLAGS_NAMESPACE
+GFLAGS_NAMESPACE-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GLOG_INCLUDE_DIR
 GLOG_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: GLOG_LIBRARY
