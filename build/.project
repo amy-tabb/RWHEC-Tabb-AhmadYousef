@@ -2,8 +2,7 @@
 <projectDescription>
 	<name>Tabb_AhmadYousef_RWHEC_Jun2018_Project@build</name>
 	<comment></comment>
-	<projects>
-	</projects>
+	<projects></projects>
 	<buildSpec>
 		<buildCommand>
 			<name>org.eclipse.cdt.make.core.makeBuilder</name>
@@ -97,8 +96,7 @@
 		</buildCommand>
 		<buildCommand>
 			<name>org.eclipse.cdt.make.core.ScannerConfigBuilder</name>
-			<arguments>
-			</arguments>
+			<arguments/>
 		</buildCommand>
 	</buildSpec>
 	<natures>
@@ -154,6 +152,11 @@
 			<location>/home/atabb/git/RWHEC-Tabb-AhmadYousef/code_src/Calibration2.cpp</location>
 		</link>
 		<link>
+			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Source Files/Camera_visualization.cpp</name>
+			<type>1</type>
+			<location>/home/atabb/git/RWHEC-Tabb-AhmadYousef/code_src/Camera_visualization.cpp</location>
+		</link>
+		<link>
 			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Source Files/DirectoryFunctions.cpp</name>
 			<type>1</type>
 			<location>/home/atabb/git/RWHEC-Tabb-AhmadYousef/code_src/DirectoryFunctions.cpp</location>
@@ -177,6 +180,11 @@
 			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Header Files/Calibration2.hpp</name>
 			<type>1</type>
 			<location>/home/atabb/git/RWHEC-Tabb-AhmadYousef/code_src/Calibration2.hpp</location>
+		</link>
+		<link>
+			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Header Files/Camera_visualization.hpp</name>
+			<type>1</type>
+			<location>/home/atabb/git/RWHEC-Tabb-AhmadYousef/code_src/Camera_visualization.hpp</location>
 		</link>
 		<link>
 			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Header Files/StringFunctions.hpp</name>
@@ -205,6 +213,11 @@
 		</link>
 		<link>
 			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Object Files</name>
+			<type>2</type>
+			<locationURI>virtual:/virtual</locationURI>
+		</link>
+		<link>
+			<name>[Targets]/[exe] Tabb_AhmadYousef_RWHEC_Jun2018_Project/Object Libraries</name>
 			<type>2</type>
 			<locationURI>virtual:/virtual</locationURI>
 		</link>

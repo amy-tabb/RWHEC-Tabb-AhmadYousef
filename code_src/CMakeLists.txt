@@ -5,7 +5,7 @@ project(Tabb_AhmadYousef_RWHEC_Jun2018_Project)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wextra -std=c++11")
 
 find_package(Ceres REQUIRED)
-include_directories(${CERES_INCLUDE_DIRS} /usr/local /usr/local/eigen3 /usr/local/include/opencv4)
+include_directories(${CERES_INCLUDE_DIRS} /usr/local /usr/local/eigen3  /usr/local/include/opencv4)
 link_directories( )
 
 
@@ -14,6 +14,8 @@ CostFunctions.hpp
 CostFunctions.cpp
 Calibration2.hpp
 Calibration2.cpp
+Camera_visualization.hpp
+Camera_visualization.cpp
 StringFunctions.hpp
 DirectoryFunctions.hpp
 DirectoryFunctions.cpp

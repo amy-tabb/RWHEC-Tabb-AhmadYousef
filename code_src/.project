@@ -2,12 +2,9 @@
 <projectDescription>
 	<name>Tabb_AhmadYousef_RWHEC_Jun2018_Project-Source@code_src</name>
 	<comment></comment>
-	<projects>
-	</projects>
-	<buildSpec>
-	</buildSpec>
-	<natures>
-	</natures>
+	<projects></projects>
+	<buildSpec></buildSpec>
+	<natures></natures>
 	<linkedResources>
 		<link>
 			<name>[Subprojects]</name>

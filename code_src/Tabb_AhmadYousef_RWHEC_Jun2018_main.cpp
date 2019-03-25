@@ -26,6 +26,7 @@
 
 #include "DirectoryFunctions.hpp"
 #include "StringFunctions.hpp"
+#include "Camera_visualization.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -207,6 +208,10 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 		for (int i = 0; i < robot_mounted_cameras; i++){
 			command = "mkdir " + write_dir + "camera_results" + ToString<int>(i);
 			int ret = system(command.c_str());
+
+			command = "mkdir " + write_dir + "camera_results" + ToString<int>(i) + "/ply";
+			ret = system(command.c_str());
+
 		}
 
 		for (int k = 0; k < robot_mounted_cameras; k++){
@@ -255,6 +260,17 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 
 			number_cameras = COs[k].Rts.size();
 
+			Matrix3d camera_internal;
+			Matrix4d camera_external;
+			camera_internal.setIdentity();
+			camera_internal(0,0) = COs[k].A[0][0];
+			camera_internal(1,1) = COs[k].A[1][1];
+			camera_internal(0,2) = COs[k].A[0][2];
+			camera_internal(1,2) = COs[k].A[1][2];
+
+			int rows = COs[k].A[1][2]*2;
+			int cols = COs[k].A[0][2]*2;
+
 			// convert the external parameters from the camera calibration process into the A matrices
 			for (int i = 0; i < int(COs[k].Rts.size()); i++){
 				//cout << "i " << i << endl;
@@ -268,6 +284,11 @@ int RobotWorldHandEyeCalibration(double square_mm_height, double square_mm_width
 					}
 					As[k].push_back(A1);
 					number_images_per[k]++;
+
+					camera_external = A1;
+					/// then get the .ply file version.
+					string camera_filename = write_dir + "camera_results" + ToString<int>(k) + "/ply/cam" + ToString<int>(k) + "pos" + ToString<int>(i) + ".ply";
+					create_camera(camera_internal, camera_external, 255, 0, 0, rows, cols, camera_filename);
 				}	else {
 					As[k].push_back(temp_matrix);
 				}
