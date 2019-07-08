@@ -126,9 +126,7 @@ It will take some time (on the order of 4 minutes) to perform camera calibration
 
 # Input format
 
-INPUT FORMAT -- DATASETS ARE POSTED AT THE National Agriculture Library's Ag Data Commons, DOI is 10.15482/USDA.ADC/1340592
-
-Access the datasets via link here: http://dx.doi.org/10.15482/USDA.ADC
+INPUT FORMAT -- DATASETS ARE POSTED AT THE National Agriculture Library's Ag Data Commons, DOI is [10.15482/USDA.ADC/1340592]( http://dx.doi.org/10.15482/USDA.ADC/1340592)
 
 ## Required Directories:
 
