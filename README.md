@@ -27,6 +27,7 @@ A bug with regards to the computation of the translation error has been correcte
 This README file is to accompany code for robot-world, hand-eye calibration, produced by Amy Tabb as companion to a paper:
 	Solving the Robot-World Hand-Eye(s) Calibration Problem with Iterative Methods
 
+````latex
 @Article{tabb_solving_2017,
 author="Tabb, Amy
 and Ahmad Yousef, Khalil M.",
@@ -42,9 +43,10 @@ issn="1432-1769",
 doi="10.1007/s00138-017-0841-7",
 url="https://doi.org/10.1007/s00138-017-0841-7"
 }
+````
 
 Dataset and/or code:
-
+````latex
 @misc{tabb_data_2017,
 	title = {Data from: {Solving} the {Robot}-{World} {Hand}-{Eye}(s) {Calibration} {Problem} with {Iterative} {Methods}},
 	shorttitle = {Data from},
@@ -57,7 +59,7 @@ Dataset and/or code:
 	doi = {10.15482/USDA.ADC/1340592},
 	note = {type: dataset}
 }
-
+````
 
 
 If you use this code in project that results in a publication, please cite at a minimum the paper above.  Otherwise, there are no restrictions in your use of this code.  However, no guarantees are expressed or implied.
