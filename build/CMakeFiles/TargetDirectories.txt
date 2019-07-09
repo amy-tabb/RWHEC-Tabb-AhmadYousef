@@ -1,3 +1,0 @@
-/home/atabb/git/RWHEC-Tabb-AhmadYousef/build/CMakeFiles/edit_cache.dir
-/home/atabb/git/RWHEC-Tabb-AhmadYousef/build/CMakeFiles/rebuild_cache.dir
-/home/atabb/git/RWHEC-Tabb-AhmadYousef/build/CMakeFiles/Tabb_AhmadYousef_RWHEC_Jun2018_Project.dir
