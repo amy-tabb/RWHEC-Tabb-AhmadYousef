@@ -1,5 +1,7 @@
 # RWHEC-Tabb-AhmadYousef
 
+[![DOI](https://zenodo.org/badge/79933846.svg)](https://zenodo.org/badge/latestdoi/79933846)
+
 Comments/Bugs/Problems: amy.tabb@ars.usda.gov
 
 Methods for robot-world, hand-eye calibration; version 2.0.
